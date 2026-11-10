@@ -1,0 +1,451 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>لوحة التحكم - Smart Assistant</title>
+
+    <!-- Bootstrap 5 RTL -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Cairo) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+    <style>
+            body {
+                font-family: 'Cairo', sans-serif;
+                background-color: #f8fafc;
+                min-height: 100vh;
+                display: flex;
+                margin: 0;
+            }
+
+            .sidebar {
+                width: 260px;
+                background: #1e293b;
+                color: #fff;
+                display: flex;
+                flex-direction: column;
+                padding: 1.5rem 1rem;
+                box-shadow: 4px 0 10px rgba(0,0,0,0.05);
+            }
+
+            .sidebar-brand {
+                font-size: 1.4rem;
+                font-weight: 700;
+                color: #38bdf8;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 2.5rem;
+                padding: 0 0.5rem;
+            }
+
+            .nav-link-custom {
+                color: #94a3b8;
+                padding: 0.8rem 1rem;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                text-decoration: none;
+                font-weight: 600;
+                margin-bottom: 0.5rem;
+                transition: all 0.3s ease;
+            }
+
+                .nav-link-custom:hover, .nav-link-custom.active {
+                    background-color: #2563eb;
+                    color: #ffffff;
+                }
+
+            .main-content {
+                flex: 1;
+                padding: 2rem;
+                overflow-y: auto;
+            }
+
+            .top-bar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 2rem;
+            }
+
+            .section-card {
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                padding: 1.8rem;
+                transition: all 0.3s ease;
+                cursor: pointer;
+                height: 100%;
+                position: relative;
+                overflow: hidden;
+                text-decoration: none;
+                color: inherit;
+                display: block;
+            }
+
+                .section-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.08);
+                    border-color: #cbd5e1;
+                    color: inherit;
+                }
+
+            .icon-box {
+                width: 60px;
+                height: 60px;
+                border-radius: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.8rem;
+                margin-bottom: 1.2rem;
+            }
+
+            .bg-finance {
+                background-color: #e0f2fe;
+                color: #0284c7;
+            }
+
+            .bg-memory {
+                background-color: #fef3c7;
+                color: #d97706;
+            }
+
+            .bg-health {
+                background-color: #dcfce7;
+                color: #16a34a;
+            }
+
+            .bg-entertainment {
+                background-color: #f3e8ff;
+                color: #9333ea;
+            }
+
+            .bg-records {
+                background-color: #ffe4e6;
+                color: #e11d48;
+            }
+
+            .btn-add-section {
+                border: 2px dashed #cbd5e1;
+                background: transparent;
+                color: #64748b;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 200px;
+            }
+
+                .btn-add-section:hover {
+                    border-color: #2563eb;
+                    color: #2563eb;
+                    background-color: #eff6ff;
+                }
+
+            .delete-section-btn {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                color: #ef4444;
+                background: #fee2e2;
+                border: none;
+                border-radius: 50%;
+                width: 28px;
+                height: 28px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.8rem;
+                cursor: pointer;
+                z-index: 10;
+            }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar القائمة الجانبية -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fa-solid fa-brain"></i>
+            <span>Smart Assistant</span>
+        </div>
+
+        <nav class="w-100" id="sidebarNav">
+            <a asp-controller="Home" asp-action="Dashboard" class="nav-link-custom active">
+                <i class="fa-solid fa-house"></i> الرئيسية
+            </a>
+            <a asp-controller="Finance" asp-action="Index" class="nav-link-custom">
+                <i class="fa-solid fa-wallet"></i> الشؤون المالية
+            </a>
+            <a asp-controller="Home" asp-action="Memory" class="nav-link-custom">
+                <i class="fa-solid fa-book-bookmark"></i> الذاكرة الشخصية
+            </a>
+            <a asp-controller="Home" asp-action="Health" class="nav-link-custom">
+                <i class="fa-solid fa-heart-pulse"></i> الصحة
+            </a>
+            <a asp-controller="Home" asp-action="Entertainment" class="nav-link-custom">
+                <i class="fa-solid fa-gamepad"></i> الترفيه
+            </a>
+            <a asp-controller="Home" asp-action="PersonalRecords" class="nav-link-custom">
+                <i class="fa-solid fa-folder-open"></i> السجلات الشخصية
+            </a>
+            <!-- الأقسام المخصصة ديناميكياً ستظهر هنا -->
+        </nav>
+
+        <div class="mt-auto w-100 pt-4 border-top border-secondary">
+            <a asp-controller="Account" asp-action="Login" class="nav-link-custom text-danger">
+                <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content المحتوى الرئيسي -->
+    <main class="main-content">
+        <div class="top-bar">
+            <div>
+                <h3 class="fw-bold mb-1">أهلاً بك 👋</h3>
+                <p class="text-muted mb-0">اختر القسم الذي تريد إدارته اليوم</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-white text-dark border p-2 px-3 shadow-sm rounded-pill">
+                    <i class="fa-regular fa-calendar-check text-primary me-1"></i> @DateTime.Now.ToString("dd MMMM yyyy")
+                </span>
+            </div>
+        </div>
+
+        <!-- شبكة الأقسام -->
+        <div class="row g-4" id="sectionsGrid">
+
+            <!-- 1. الشؤون المالية -->
+            <div class="col-md-6 col-lg-4">
+                <a asp-controller="Finance" asp-action="Index" class="section-card">
+                    <div class="icon-box bg-finance">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                    <h5 class="fw-bold">الشؤون المالية</h5>
+                    <p class="text-muted small">إدارة المصاريف، الإيرادات، الميزانيات، والتقارير المالية.</p>
+                </a>
+            </div>
+
+            <!-- 2. الذاكرة الشخصية والأرشيف -->
+            <div class="col-md-6 col-lg-4">
+                <a asp-controller="Home" asp-action="Memory" class="section-card">
+                    <div class="icon-box bg-memory">
+                        <i class="fa-solid fa-book-bookmark"></i>
+                    </div>
+                    <h5 class="fw-bold">الذاكرة الشخصية</h5>
+                    <p class="text-muted small">تدوين الملاحظات، الحماية بـ PIN، ومجلد الصور والأرشيف.</p>
+                </a>
+            </div>
+
+            <!-- 3. الصحة -->
+            <div class="col-md-6 col-lg-4">
+                <a asp-controller="Home" asp-action="Health" class="section-card">
+                    <div class="icon-box bg-health">
+                        <i class="fa-solid fa-heart-pulse"></i>
+                    </div>
+                    <h5 class="fw-bold">الصحة</h5>
+                    <p class="text-muted small">إدارة الأطباء، العيادات، مواعيد الزيارات، والسجل الطبي.</p>
+                </a>
+            </div>
+
+            <!-- 4. الترفيه -->
+            <div class="col-md-6 col-lg-4">
+                <a asp-controller="Home" asp-action="Entertainment" class="section-card">
+                    <div class="icon-box bg-entertainment">
+                        <i class="fa-solid fa-gamepad"></i>
+                    </div>
+                    <h5 class="fw-bold">الترفيه</h5>
+                    <p class="text-muted small">قوائم المشاهدة، المناسبات والفعاليات، ومفكرة الهوايات.</p>
+                </a>
+            </div>
+
+            <!-- 5. السجلات الشخصية -->
+            <div class="col-md-6 col-lg-4">
+                <a asp-controller="Home" asp-action="PersonalRecords" class="section-card">
+                    <div class="icon-box bg-records">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                    <h5 class="fw-bold">السجلات الشخصية</h5>
+                    <p class="text-muted small">سجل السيارة والصيانة، الوثائق الرسمية، والاشتراكات.</p>
+                </a>
+            </div>
+
+            <!-- الكروت الديناميكية الجديدة ستولد هنا سحابياً -->
+            <!-- 6. زر إضافة قسم جديد -->
+            <div class="col-md-6 col-lg-4" id="addSectionCardCol">
+                <div class="section-card btn-add-section" onclick="openNewSectionModal()">
+                    <i class="fa-solid fa-plus-circle fs-2 mb-2"></i>
+                    <span class="fw-bold">إضافة قسم جديد</span>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal نافذة إضافة قسم جديد -->
+    <div class="modal fade" id="newSectionModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-square-plus me-2"></i> إنشاء قسم مخصص جديد</h5>
+                    <button type="button" class="btn-close btn-close-white ms-0 me-auto" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="newSectionForm" onsubmit="createNewSection(event)">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">اسم القسم الجديد</label>
+                            <input type="text" id="secTitle" class="form-control" placeholder="مثلاً: مهام العمل، أهداف السنة..." required autocomplete="off">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">وصف قصير للقسم</label>
+                            <input type="text" id="secDesc" class="form-control" placeholder="وصف مختصر للوظيفة..." required autocomplete="off">
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">الأيقونة</label>
+                                <select id="secIcon" class="form-select">
+                                    <option value="fa-briefcase">حقيبة عمل (Briefcase)</option>
+                                    <option value="fa-bullseye">أهداف (Target)</option>
+                                    <option value="fa-graduation-cap">تعليم ودراسة (Education)</option>
+                                    <option value="fa-dumbbell">رياضة ولياقة (Gym)</option>
+                                    <option value="fa-plane">سفر ورسائل (Travel)</option>
+                                    <option value="fa-cart-shopping">تسوق ومشتريات (Shopping)</option>
+                                    <option value="fa-lightbulb">أفكار وإلهام (Ideas)</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">لون الكارت</label>
+                                <select id="secColor" class="form-select">
+                                    <option value="bg-primary text-white">أزرق ملكي</option>
+                                    <option value="bg-success text-white">أخضر زمردي</option>
+                                    <option value="bg-warning text-dark">أصفر دافئ</option>
+                                    <option value="bg-danger text-white">أحمر داكن</option>
+                                    <option value="bg-info text-white">سماوي ناعم</option>
+                                    <option value="bg-dark text-white">أسود فاخر</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-primary btn-sm fw-bold px-4">إنشاء القسم وحفظه ☁️</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+            const firebaseConfig = {
+                apiKey: "AIzaSyCth_4KFFBASVtQvZ8qcW-fWtaSTK7Y-Jg",
+                authDomain: "smartassistant-web.firebaseapp.com",
+                projectId: "smartassistant-web",
+                storageBucket: "smartassistant-web.firebasestorage.app",
+                messagingSenderId: "882536781365",
+                appId: "1:882536781365:web:f06cab966d9479b21637c"
+            };
+
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+
+            let newSectionModalInstance;
+
+            window.addEventListener('DOMContentLoaded', () => {
+                newSectionModalInstance = new bootstrap.Modal(document.getElementById('newSectionModal'));
+                loadCustomSections();
+            });
+
+            function openNewSectionModal() {
+                document.getElementById('newSectionForm').reset();
+                newSectionModalInstance.show();
+            }
+
+            function createNewSection(e) {
+                e.preventDefault();
+                const title = document.getElementById('secTitle').value.trim();
+                const desc = document.getElementById('secDesc').value.trim();
+                const icon = document.getElementById('secIcon').value;
+                const colorClass = document.getElementById('secColor').value;
+
+                db.collection("custom_app_sections").add({
+                    title: title,
+                    desc: desc,
+                    icon: icon,
+                    colorClass: colorClass,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    newSectionModalInstance.hide();
+                    alert('تمت إضافة القسم الجديد بنجاح إلى لوحة التحكم!');
+                });
+            }
+
+            function loadCustomSections() {
+                db.collection("custom_app_sections").orderBy("createdAt", "asc").onSnapshot(snapshot => {
+                    // تنظيف الكروت المخصصة القديمة قبل إعادة التوليد
+                    document.querySelectorAll('.dynamic-created-card').forEach(el => el.remove());
+                    document.querySelectorAll('.dynamic-sidebar-link').forEach(el => el.remove());
+
+                    const addCardCol = document.getElementById('addSectionCardCol');
+                    const sidebarNav = document.getElementById('sidebarNav');
+
+                    snapshot.forEach(doc => {
+                        const sec = doc.data();
+                        const secId = doc.id;
+
+                        // 1. إضافة كارت في الداشبورد
+                        const cardHtml = `
+                                    <div class="col-md-6 col-lg-4 dynamic-created-card">
+                                        <div class="section-card position-relative">
+                                            <button class="delete-section-btn" title="حذف القسم" onclick="deleteCustomSection('${secId}', event)">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                            <a href="/Home/CustomSection?id=${secId}&title=${encodeURIComponent(sec.title)}" class="text-decoration-none text-reset">
+                                                <div class="icon-box ${sec.colorClass}">
+                                                    <i class="fa-solid ${sec.icon}"></i>
+                                                </div>
+                                                <h5 class="fw-bold">${sec.title}</h5>
+                                                <p class="text-muted small">${sec.desc}</p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                `;
+                        addCardCol.insertAdjacentHTML('beforebegin', cardHtml);
+
+                        // 2. إضافة رابط في القائمة الجانبية
+                        const sidebarLinkHtml = `
+                                    <a href="/Home/CustomSection?id=${secId}&title=${encodeURIComponent(sec.title)}" class="nav-link-custom dynamic-sidebar-link">
+                                        <i class="fa-solid ${sec.icon}"></i> ${sec.title}
+                                    </a>
+                                `;
+                        sidebarNav.insertAdjacentHTML('beforeend', sidebarLinkHtml);
+                    });
+                });
+            }
+
+            function deleteCustomSection(id, event) {
+                event.stopPropagation();
+                if (confirm('هل أنت تأكد من رغبتك في حذف هذا القسم ومحتوياته؟')) {
+                    db.collection("custom_app_sections").doc(id).delete();
+                }
+            }
+    </script>
+</body>
+</html>

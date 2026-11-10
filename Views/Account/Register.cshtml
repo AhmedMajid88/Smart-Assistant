@@ -1,0 +1,104 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>إنشاء حساب - Smart Assistant</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+            body {
+                font-family: 'Cairo', sans-serif;
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .auth-card {
+                background: #ffffff;
+                border-radius: 20px;
+                padding: 2.5rem;
+                width: 100%;
+                max-width: 420px;
+                box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            }
+
+            .brand-icon {
+                width: 70px;
+                height: 70px;
+                background: #dcfce7;
+                color: #16a34a;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 2rem;
+                margin: 0 auto 1.5rem auto;
+            }
+    </style>
+</head>
+<body>
+    <div class="auth-card">
+        <div class="brand-icon"><i class="fa-solid fa-user-plus"></i></div>
+        <h3 class="text-center fw-bold mb-1 text-success">حساب جديد</h3>
+        <p class="text-center text-muted small mb-4">أنشئ حسابك الخاص للبدء فوراً</p>
+
+        <form onsubmit="handleRegister(event)">
+            <div class="mb-3">
+                <label class="form-label fw-semibold small">البريد الإلكتروني</label>
+                <input type="email" id="regEmail" class="form-control" placeholder="example@domain.com" required>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-semibold small">كلمة المرور (6 أحرف على الأقل)</label>
+                <input type="password" id="regPassword" class="form-control" placeholder="********" required>
+            </div>
+            <button type="submit" class="btn btn-success w-100 py-2 fw-bold shadow-sm mb-3">تسجيل الحساب</button>
+            <div class="text-center small">
+                لديك حساب بالفعل؟ <a href="/Account/Login" class="text-decoration-none fw-bold text-primary">تسجيل الدخول</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+            const firebaseConfig = {
+                apiKey: "AIzaSyCth_4KFf8ASVTqVZ8qcW-fWTaSTK7Y-Jg",
+                authDomain: "smartassistant-web.firebaseapp.com",
+                projectId: "smartassistant-web",
+                storageBucket: "smartassistant-web.firebasestorage.app",
+                messagingSenderId: "802536781365",
+                appId: "1:802536781365:web:f06ceb966d94797b21637c",
+                measurementId: "G-BSV31DZLNH"
+            };
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+            function handleRegister(e) {
+                e.preventDefault();
+                const email = document.getElementById('regEmail').value.trim();
+                const password = document.getElementById('regPassword').value.trim();
+
+                firebase.auth().createUserWithEmailAndPassword(email, password)
+                    .then((cred) => {
+                        return firebase.firestore().collection("users").doc(cred.user.uid).set({
+                            email: email,
+                            role: "user",
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    })
+                    .then(() => {
+                        alert('تم إنشاء الحساب بنجاح!');
+                        window.location.href = '/Home/Dashboard';
+                    })
+                    .catch(err => alert('خطأ في التسجيل: ' + err.message));
+            }
+    </script>
+</body>
+</html>

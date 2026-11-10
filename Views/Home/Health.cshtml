@@ -1,0 +1,889 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>قسم الصحة - Smart Assistant</title>
+
+    <!-- Bootstrap 5 RTL -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Cairo) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+    <style>
+            body {
+                font-family: 'Cairo', sans-serif;
+                background-color: #f8fafc;
+                min-height: 100vh;
+                display: flex;
+                margin: 0;
+            }
+
+            .sidebar {
+                width: 260px;
+                background: #1e293b;
+                color: #fff;
+                display: flex;
+                flex-direction: column;
+                padding: 1.5rem 1rem;
+            }
+
+            .sidebar-brand {
+                font-size: 1.4rem;
+                font-weight: 700;
+                color: #38bdf8;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 2.5rem;
+            }
+
+            .nav-link-custom {
+                color: #94a3b8;
+                padding: 0.8rem 1rem;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                text-decoration: none;
+                font-weight: 600;
+                margin-bottom: 0.5rem;
+                transition: all 0.3s ease;
+            }
+
+                .nav-link-custom:hover, .nav-link-custom.active {
+                    background-color: #2563eb;
+                    color: #ffffff;
+                }
+
+            .main-content {
+                flex: 1;
+                padding: 2rem;
+                overflow-y: auto;
+            }
+
+            .card-custom {
+                background: #ffffff;
+                border-radius: 16px;
+                border: 1px solid #e2e8f0;
+                padding: 1.5rem;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+                margin-bottom: 1.5rem;
+            }
+
+            /* تعديل اتجاه حقول التواريخ لتبدو بشكل صحيح (يوم / شهر / سنة) */
+            input[type="date"] {
+                direction: ltr;
+                text-align: right;
+            }
+
+            /* كروت المجلدات الرئيسية */
+            .health-folder-card {
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                color: #fff;
+                border-radius: 18px;
+                padding: 1.8rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                border: 1px solid #334155;
+                height: 100%;
+            }
+
+                .health-folder-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+                    border-color: #10b981;
+                }
+
+            .folder-icon-green {
+                font-size: 3rem;
+                color: #10b981;
+            }
+
+            .folder-icon-blue {
+                font-size: 3rem;
+                color: #3b82f6;
+            }
+
+            .folder-icon-red {
+                font-size: 3rem;
+                color: #ef4444;
+            }
+
+            .image-thumb-card {
+                position: relative;
+                border-radius: 12px;
+                overflow: hidden;
+                border: 2px solid #e2e8f0;
+                background: #000;
+                height: 130px;
+                cursor: pointer;
+            }
+
+                .image-thumb-card img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+    </style>
+</head>
+<body>
+
+    <!-- القائمة الجانبية -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fa-solid fa-brain"></i>
+            <span>Smart Assistant</span>
+        </div>
+
+        <nav class="w-100">
+            <a href="/Home/Dashboard" class="nav-link-custom">
+                <i class="fa-solid fa-house"></i> الرئيسية
+            </a>
+            <a href="/Finance/Index" class="nav-link-custom">
+                <i class="fa-solid fa-wallet"></i> الشؤون المالية
+            </a>
+            <a href="/Home/Memory" class="nav-link-custom">
+                <i class="fa-solid fa-book-bookmark"></i> الذاكرة الشخصية
+            </a>
+            <a href="/Home/Health" class="nav-link-custom active">
+                <i class="fa-solid fa-heart-pulse"></i> الصحة
+            </a>
+            <a href="#" class="nav-link-custom">
+                <i class="fa-solid fa-gamepad"></i> الترفيه
+            </a>
+            <a href="#" class="nav-link-custom">
+                <i class="fa-solid fa-folder-open"></i> السجلات الشخصية
+            </a>
+        </nav>
+
+        <div class="mt-auto w-100 pt-4 border-top border-secondary">
+            <a href="/Account/Login" class="nav-link-custom text-danger">
+                <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
+            </a>
+        </div>
+    </aside>
+
+    <!-- المحتوى الرئيسي -->
+    <main class="main-content">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1">المنظومة الصحية الشاملة (متصل بالسحابة ☁️)</h3>
+                <p class="text-muted mb-0">إدارة سجل المراجعات، الوصفات والأدوية، ومتابعة المؤشرات الحيوية</p>
+            </div>
+            <a href="/Home/Dashboard" class="btn btn-outline-secondary btn-sm">
+                <i class="fa-solid fa-arrow-right me-1"></i> العودة للداشبورد
+            </a>
+        </div>
+
+        <!-- المجلدات الرئيسية الثلاثة -->
+        <div class="row g-4">
+
+            <!-- 1. مجلد سجل المراجعات والأطباء -->
+            <div class="col-md-4">
+                <div class="health-folder-card d-flex flex-column justify-content-between" onclick="openReviewsFolderModal()">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <i class="fa-solid fa-folder-closed folder-icon-green"></i>
+                            <span class="badge bg-success bg-opacity-20 text-success border border-success px-3 py-2 rounded-pill" id="doctorsCountBadge">0 أطباء</span>
+                        </div>
+                        <h4 class="fw-bold text-white mb-2">سجل المراجعات والأطباء</h4>
+                        <p class="text-muted small">بطاقات الطوارئ وأفراد العائلة والـ BMI، دليل الأطباء، المواعيد القادمة، والزيارات.</p>
+                    </div>
+                    <div class="pt-3 border-top border-secondary text-end">
+                        <span class="btn btn-outline-light btn-sm rounded-pill px-3">
+                            <i class="fa-solid fa-folder-open me-1"></i> فتح السجل
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. مجلد إدارة الأدوية والوصفات -->
+            <div class="col-md-4">
+                <div class="health-folder-card d-flex flex-column justify-content-between" onclick="openMedsFolderModal()">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <i class="fa-solid fa-folder-closed folder-icon-blue"></i>
+                            <span class="badge bg-primary bg-opacity-20 text-primary border border-primary px-3 py-2 rounded-pill" id="medsCountBadge">0 أدوية</span>
+                        </div>
+                        <h4 class="fw-bold text-white mb-2">إدارة الأدوية والوصفات</h4>
+                        <p class="text-muted small">رفع صور الروشتات والتحاليل، جدول الأدوية اليومية، وتنبيهات إعادة الشراء قبل النفاد.</p>
+                    </div>
+                    <div class="pt-3 border-top border-secondary text-end">
+                        <span class="btn btn-outline-light btn-sm rounded-pill px-3">
+                            <i class="fa-solid fa-folder-open me-1"></i> فتح السجل
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. مجلد مؤشرات الصحة -->
+            <div class="col-md-4">
+                <div class="health-folder-card d-flex flex-column justify-content-between" onclick="openVitalsFolderModal()">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <i class="fa-solid fa-folder-closed folder-icon-red"></i>
+                            <span class="badge bg-danger bg-opacity-20 text-danger border border-danger px-3 py-2 rounded-pill" id="vitalsCountBadge">0 قراءات</span>
+                        </div>
+                        <h4 class="fw-bold text-white mb-2">مؤشرات الصحة</h4>
+                        <p class="text-muted small">سجل سريع ومباشر لمتابعة قياسات الوزن، ضغط الدم، ومستوى السكر في الدم.</p>
+                    </div>
+                    <div class="pt-3 border-top border-secondary text-end">
+                        <span class="btn btn-outline-light btn-sm rounded-pill px-3">
+                            <i class="fa-solid fa-folder-open me-1"></i> فتح السجل
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- ================================================================ -->
+    <!-- 1. Modal سجل المراجعات والأطباء -->
+    <!-- ================================================================ -->
+    <div class="modal fade" id="reviewsFolderModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-doctor text-success me-2"></i> سجل المراجعات والأطباء والطوارئ</h5>
+                    <button type="button" class="btn-close btn-close-white ms-0 me-auto" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- تبويبات التنقل الأربعة -->
+                    <ul class="nav nav-pills nav-fill mb-4 bg-light p-2 rounded-3 border" id="pills-tab" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active fw-bold small" id="pills-emergency-tab" data-bs-toggle="pill" data-bs-target="#pills-emergency" type="button">
+                                <i class="fa-solid fa-kit-medical me-1"></i> 1. معلومات الطوارئ والعائلة
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link fw-bold small" id="pills-doctors-tab" data-bs-toggle="pill" data-bs-target="#pills-doctors" type="button">
+                                <i class="fa-solid fa-id-card me-1"></i> 2. دليل الأطباء
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link fw-bold small" id="pills-upcoming-tab" data-bs-toggle="pill" data-bs-target="#pills-upcoming" type="button">
+                                <i class="fa-solid fa-calendar-check me-1"></i> 3. المواعيد القادمة
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link fw-bold small" id="pills-history-tab" data-bs-toggle="pill" data-bs-target="#pills-history" type="button">
+                                <i class="fa-solid fa-clock-rotate-left me-1"></i> 4. الزيارات السابقة
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="pills-tabContent">
+
+                        <!-- تبويب 1: معلومات الطوارئ والعائلة -->
+                        <div class="tab-pane fade show active" id="pills-emergency">
+                            <div class="row g-3">
+                                <div class="col-md-5">
+                                    <div class="card p-3 border-0 bg-light rounded-3">
+                                        <h6 class="fw-bold text-danger mb-3"><i class="fa-solid fa-user-shield me-1"></i> إضافة فرد (نفسك أو من العائلة)</h6>
+                                        <form id="emergencyForm" onsubmit="saveEmergencyData(event)">
+                                            <div class="mb-2">
+                                                <label class="form-label extra-small fw-bold">الاسم الكامل</label>
+                                                <input type="text" id="emName" class="form-control form-control-sm" placeholder="مثلاً: أحمد ماجد أو اسم أحد الأبناء" required autocomplete="off">
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label extra-small fw-bold">تاريخ الميلاد (يوم / شهر / سنة)</label>
+                                                <input type="date" id="emDob" class="form-control form-control-sm" required>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label extra-small fw-bold">الجنس</label>
+                                                <select id="emGender" class="form-select form-select-sm" required>
+                                                    <option value="ذكر">ذكر</option>
+                                                    <option value="أنثى">أنثى</option>
+                                                </select>
+                                            </div>
+                                            <div class="row g-2 mb-2">
+                                                <div class="col-6">
+                                                    <label class="form-label extra-small fw-bold">الطول (سم)</label>
+                                                    <input type="number" step="0.1" id="emHeight" class="form-control form-control-sm" placeholder="مثلاً: 175" required>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label extra-small fw-bold">الوزن (كغم)</label>
+                                                    <input type="number" step="0.1" id="emWeight" class="form-control form-control-sm" placeholder="مثلاً: 78" required>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label extra-small fw-bold">فصيلة الدم</label>
+                                                <select id="emBloodType" class="form-select form-select-sm" required>
+                                                    <option value="O+">O+</option>
+                                                    <option value="O-">O-</option>
+                                                    <option value="A+">A+</option>
+                                                    <option value="A-">A-</option>
+                                                    <option value="B+">B+</option>
+                                                    <option value="B-">B-</option>
+                                                    <option value="AB+">AB+</option>
+                                                    <option value="AB-">AB-</option>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-danger btn-sm w-100 fw-bold">حفظ وإضافة للقائمة</button>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <h6 class="fw-bold mb-3">بطاقات الطوارئ (لك ولأفراد العائلة):</h6>
+                                    <div id="emergencyCardsContainer" style="max-height: 350px; overflow-y: auto;">
+                                        <p class="text-muted small text-center py-4">لا توجد سجلات طوارئ مضافة بعد.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- تبويب 2: تسجيل ودليل الأطباء -->
+                        <div class="tab-pane fade" id="pills-doctors">
+                            <div class="row g-3">
+                                <div class="col-md-5">
+                                    <div class="card p-3 border-0 bg-light rounded-3">
+                                        <h6 class="fw-bold text-success mb-3"><i class="fa-solid fa-user-plus me-1"></i> إضافة بيانات طبيب</h6>
+                                        <form id="doctorForm" onsubmit="addDoctor(event)">
+                                            <input type="text" id="docName" class="form-control form-control-sm mb-2" placeholder="اسم الطبيب (مثلاً: د. أحمد)" required autocomplete="off">
+                                            <input type="text" id="docSpecialty" class="form-control form-control-sm mb-2" placeholder="التخصص (مثلاً: باطنية، أسنان)" required autocomplete="off">
+                                            <input type="text" id="docPhone" class="form-control form-control-sm mb-2" placeholder="رقم التواصل / الهاتف" autocomplete="off">
+                                            <input type="text" id="docAddress" class="form-control form-control-sm mb-3" placeholder="عنوان العيادة" autocomplete="off">
+                                            <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">حفظ الطبيب</button>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <h6 class="fw-bold mb-3">قائمة الأطباء المسجلين:</h6>
+                                    <div class="list-group" id="doctorsListContainer" style="max-height: 280px; overflow-y: auto;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- تبويب 3: مواعيد الزيارات القادمة والتنبيهات -->
+                        <div class="tab-pane fade" id="pills-upcoming">
+                            <div class="row g-3">
+                                <div class="col-md-5">
+                                    <div class="card p-3 border-0 bg-light rounded-3">
+                                        <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-calendar-plus me-1"></i> جدولة موعد قادم</h6>
+                                        <form id="appointmentForm" onsubmit="addAppointment(event)">
+                                            <select id="appDocSelect" class="form-select form-select-sm mb-2" required></select>
+                                            <input type="datetime-local" id="appDateTime" class="form-control form-control-sm mb-2" required>
+                                            <input type="text" id="appNotes" class="form-control form-control-sm mb-3" placeholder="ملاحظات الموعد / الاستشارة" autocomplete="off">
+                                            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">حفظ الموعد وضبط التنبيه</button>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <h6 class="fw-bold mb-3">المواعيد القادمة:</h6>
+                                    <div class="list-group" id="appointmentsListContainer" style="max-height: 280px; overflow-y: auto;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- تبويب 4: سجل الزيارات السابقة والتشخيص -->
+                        <div class="tab-pane fade" id="pills-history">
+                            <div class="row g-3">
+                                <div class="col-md-5">
+                                    <div class="card p-3 border-0 bg-light rounded-3">
+                                        <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-file-medical me-1"></i> توثيق زيارة سابقة</h6>
+                                        <form id="visitHistoryForm" onsubmit="addVisitHistory(event)">
+                                            <select id="histDocSelect" class="form-select form-select-sm mb-2" required></select>
+                                            <input type="date" id="histDate" class="form-control form-control-sm mb-2" required>
+                                            <input type="text" id="histReason" class="form-control form-control-sm mb-2" placeholder="سبب الزيارة / الأعراض" required autocomplete="off">
+                                            <textarea id="histDiagnosis" class="form-control form-control-sm mb-2" rows="2" placeholder="تشخيص الطبيب والتعليمات" required></textarea>
+                                            <button type="submit" class="btn btn-dark btn-sm w-100 fw-bold">حفظ الزيارة في السجل</button>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <h6 class="fw-bold mb-3">الأرشيف الطبي للزيارات:</h6>
+                                    <div class="list-group" id="visitHistoryListContainer" style="max-height: 280px; overflow-y: auto;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إغلاق السجل</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. Modal إدارة الأدوية والوصفات -->
+    <!-- ========================================== -->
+    <div class="modal fade" id="medsFolderModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-pills text-primary me-2"></i> إدارة الأدوية والوصفات الطبية</h5>
+                    <button type="button" class="btn-close btn-close-white ms-0 me-auto" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <ul class="nav nav-pills nav-fill mb-4 bg-light p-2 rounded-3 border" id="meds-tab" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active fw-bold" id="pills-prescriptions-tab" data-bs-toggle="pill" data-bs-target="#pills-prescriptions" type="button">
+                                <i class="fa-solid fa-receipt me-1"></i> 1. صور الوصفات (الروشتة) والتحاليل
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link fw-bold" id="pills-daily-meds-tab" data-bs-toggle="pill" data-bs-target="#pills-daily-meds" type="button">
+                                <i class="fa-solid fa-tablets me-1"></i> 2. جدول الأدوية اليومية والتنبيهات
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <!-- الفرعية 1 -->
+                        <div class="tab-pane fade show active" id="pills-prescriptions">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="card p-3 border-0 bg-light rounded-3">
+                                        <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-upload me-1"></i> رفع روشتة / تحليل</h6>
+                                        <form id="rxForm" onsubmit="addRxImage(event)">
+                                            <input type="text" id="rxTitle" class="form-control form-control-sm mb-2" placeholder="وصف المختصر (روشتة، تحليل)" required autocomplete="off">
+                                            <div class="input-group input-group-sm mb-2">
+                                                <input type="file" id="rxFile" class="form-control" accept="image/*" required onchange="previewRxImage(event)">
+                                                <button type="submit" id="saveRxBtn" class="btn btn-primary fw-bold" disabled>حفظ</button>
+                                            </div>
+                                            <div class="text-center d-none" id="rxPreviewBox">
+                                                <img id="rxPreview" src="" class="rounded border" style="max-height: 90px; object-fit: contain;">
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <h6 class="fw-bold mb-3">أرشيف الوصفات والتحاليل المحفوظة:</h6>
+                                    <div class="row g-2" id="rxImagesGrid" style="max-height: 280px; overflow-y: auto;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- الفرعية 2 -->
+                        <div class="tab-pane fade" id="pills-daily-meds">
+                            <div class="row g-3">
+                                <div class="col-md-5">
+                                    <div class="card p-3 border-0 bg-light rounded-3">
+                                        <h6 class="fw-bold text-success mb-3"><i class="fa-solid fa-capsules me-1"></i> إضافة دواء للجدول</h6>
+                                        <form id="medForm" onsubmit="addMedicine(event)">
+                                            <input type="text" id="medName" class="form-control form-control-sm mb-2" placeholder="اسم الدواء" required autocomplete="off">
+                                            <input type="text" id="medDose" class="form-control form-control-sm mb-2" placeholder="الجرعة والتوقيت (مثلاً: حبة بعد الأكل 8 صباحاً)" required autocomplete="off">
+                                            <input type="number" id="medStock" class="form-control form-control-sm mb-3" placeholder="الكمية المتبقية (للتنبيه قبل النفاد)" required>
+                                            <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">إضافة الدواء للجدول</button>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <h6 class="fw-bold mb-3">جدول الأدوية اليومي وحالة الكمية:</h6>
+                                    <div class="list-group" id="medsListContainer" style="max-height: 280px; overflow-y: auto;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إغلاق السجل</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 3. Modal مؤشرات الصحة -->
+    <!-- ========================================== -->
+    <div class="modal fade" id="vitalsFolderModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-heart-pulse text-danger me-2"></i> سجل مؤشرات الصحة الحيوية</h5>
+                    <button type="button" class="btn-close btn-close-white ms-0 me-auto" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-5">
+                            <div class="card p-3 border-0 bg-light rounded-3">
+                                <h6 class="fw-bold text-danger mb-3"><i class="fa-solid fa-square-plus me-1"></i> تسجيل قراءة جديدة</h6>
+                                <form id="vitalsForm" onsubmit="addVitalRecord(event)">
+                                    <select id="vitalType" class="form-select form-select-sm mb-2" required>
+                                        <option value="الوزن (كغم)">الوزن (كغم)</option>
+                                        <option value="ضغط الدم">ضغط الدم (مثلاً 120/80)</option>
+                                        <option value="السكر في الدم">السكر في الدم (mg/dL)</option>
+                                    </select>
+                                    <input type="text" id="vitalValue" class="form-control form-control-sm mb-2" placeholder="قيمة القراءة" required autocomplete="off">
+                                    <input type="date" id="vitalDate" class="form-control form-control-sm mb-3" required>
+                                    <button type="submit" class="btn btn-danger btn-sm w-100 fw-bold">حفظ القراءة</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <h6 class="fw-bold mb-3">سجل القراءات والمؤشرات الأخيرة:</h6>
+                            <div class="list-group" id="vitalsListContainer" style="max-height: 280px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إغلاق السجل</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+            const firebaseConfig = {
+                apiKey: "AIzaSyCth_4KFFBASVtQvZ8qcW-fWtaSTK7Y-Jg",
+                authDomain: "smartassistant-web.firebaseapp.com",
+                projectId: "smartassistant-web",
+                storageBucket: "smartassistant-web.firebasestorage.app",
+                messagingSenderId: "882536781365",
+                appId: "1:882536781365:web:f06cab966d9479b21637c"
+            };
+
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            const db = firebase.firestore();
+
+            let doctors = [], appointments = [], visitHistory = [], rxImages = [], medicines = [], vitals = [], emergencyProfiles = [];
+            let reviewsModal, medsModal, vitalsModal;
+            let selectedRxBase64 = "";
+
+            window.addEventListener('DOMContentLoaded', () => {
+                reviewsModal = new bootstrap.Modal(document.getElementById('reviewsFolderModal'));
+                medsModal = new bootstrap.Modal(document.getElementById('medsFolderModal'));
+                vitalsModal = new bootstrap.Modal(document.getElementById('vitalsFolderModal'));
+
+                const todayStr = new Date().toISOString().split('T')[0];
+                document.getElementById('vitalDate').value = todayStr;
+                document.getElementById('histDate').value = todayStr;
+
+                loadAllHealthData();
+            });
+
+            function loadAllHealthData() {
+                db.collection("health_doctors").orderBy("createdAt", "desc").onSnapshot(s => {
+                    doctors = [];
+                    s.forEach(d => doctors.push({ id: d.id, ...d.data() }));
+                    document.getElementById('doctorsCountBadge').innerText = `${doctors.length} أطباء`;
+                    renderDoctorsList();
+                    updateDoctorDropdowns();
+                });
+
+                db.collection("health_appointments").orderBy("createdAt", "desc").onSnapshot(s => {
+                    appointments = [];
+                    s.forEach(d => appointments.push({ id: d.id, ...d.data() }));
+                    renderAppointmentsList();
+                });
+
+                db.collection("health_visit_history").orderBy("createdAt", "desc").onSnapshot(s => {
+                    visitHistory = [];
+                    s.forEach(d => visitHistory.push({ id: d.id, ...d.data() }));
+                    renderVisitHistoryList();
+                });
+
+                db.collection("health_rx_images").orderBy("createdAt", "desc").onSnapshot(s => {
+                    rxImages = [];
+                    s.forEach(d => rxImages.push({ id: d.id, ...d.data() }));
+                    renderRxImagesGrid();
+                });
+
+                db.collection("health_medicines").orderBy("createdAt", "desc").onSnapshot(s => {
+                    medicines = [];
+                    s.forEach(d => medicines.push({ id: d.id, ...d.data() }));
+                    document.getElementById('medsCountBadge').innerText = `${medicines.length} أدوية`;
+                    renderMedsList();
+                });
+
+                db.collection("health_vitals").orderBy("createdAt", "desc").onSnapshot(s => {
+                    vitals = [];
+                    s.forEach(d => vitals.push({ id: d.id, ...d.data() }));
+                    document.getElementById('vitalsCountBadge').innerText = `${vitals.length} قراءات`;
+                    renderVitalsList();
+                });
+
+                db.collection("health_emergency_family").orderBy("createdAt", "desc").onSnapshot(s => {
+                    emergencyProfiles = [];
+                    s.forEach(d => emergencyProfiles.push({ id: d.id, ...d.data() }));
+                    renderEmergencyCards();
+                });
+            }
+
+            function openReviewsFolderModal() { reviewsModal.show(); }
+            function openMedsFolderModal() { medsModal.show(); }
+            function openVitalsFolderModal() { vitalsModal.show(); }
+
+            // --- معلومات الطوارئ وأفراد العائلة ---
+            function saveEmergencyData(e) {
+                e.preventDefault();
+                const name = document.getElementById('emName').value.trim();
+                const dob = document.getElementById('emDob').value;
+                const gender = document.getElementById('emGender').value;
+                const height = parseFloat(document.getElementById('emHeight').value);
+                const weight = parseFloat(document.getElementById('emWeight').value);
+                const bloodType = document.getElementById('emBloodType').value;
+
+                const birthDate = new Date(dob);
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) { age--; }
+
+                const heightInMeters = height / 100;
+                const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(1);
+
+                let bmiStatus = "";
+                if (bmi < 18.5) bmiStatus = "نقص في الوزن";
+                else if (bmi >= 18.5 && bmi <= 24.9) bmiStatus = "وزن طبيعي وصحي";
+                else if (bmi >= 25 && bmi <= 29.9) bmiStatus = "زيادة في الوزن";
+                else bmiStatus = "سمنة";
+
+                db.collection("health_emergency_family").add({
+                    name, dob, age, gender, height, weight, bloodType, bmi, bmiStatus,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    document.getElementById('emergencyForm').reset();
+                    alert('تمت إضافة بيانات الفرد بنجاح!');
+                });
+            }
+
+            function renderEmergencyCards() {
+                const container = document.getElementById('emergencyCardsContainer');
+                container.innerHTML = emergencyProfiles.length === 0 ? '<p class="text-muted small text-center py-4">لم يتم تسجيل أي أفراد للطوارئ بعد.</p>' : '';
+
+                emergencyProfiles.forEach(p => {
+                    let colorClass = "text-success";
+                    if (p.bmi < 18.5) colorClass = "text-warning";
+                    else if (p.bmi >= 25 && p.bmi <= 29.9) colorClass = "text-info";
+                    else if (p.bmi >= 30) colorClass = "text-danger";
+
+                    container.innerHTML += `
+                                <div class="card p-3 border mb-3 rounded-3 shadow-sm position-relative bg-white">
+                                    <button class="btn btn-outline-danger btn-sm position-absolute top-0 end-0 m-2 py-0 px-1" onclick="db.collection('health_emergency_family').doc('${p.id}').delete()"><i class="fa-solid fa-trash"></i></button>
+                                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2 pe-4">
+                                        <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-user text-primary me-1"></i> ${p.name}</h6>
+                                        <span class="badge bg-danger">فصيلة: ${p.bloodType}</span>
+                                    </div>
+                                    <div class="row text-center g-2 mb-2">
+                                        <div class="col-4 border-end">
+                                            <span class="text-muted extra-small d-block" style="font-size:0.7rem;">العمر / الميلاد</span>
+                                            <strong class="text-dark small">${p.age} سنة</strong>
+                                        </div>
+                                        <div class="col-4 border-end">
+                                            <span class="text-muted extra-small d-block" style="font-size:0.7rem;">الجنس</span>
+                                            <strong class="text-dark small">${p.gender}</strong>
+                                        </div>
+                                        <div class="col-4">
+                                            <span class="text-muted extra-small d-block" style="font-size:0.7rem;">الطول / الوزن</span>
+                                            <strong class="text-dark small">${p.height}سم | ${p.weight}كغم</strong>
+                                        </div>
+                                    </div>
+                                    <div class="p-2 bg-light rounded-2 text-center border">
+                                        <span class="extra-small text-muted d-block" style="font-size:0.75rem;">مؤشر كتلة الجسم (BMI)</span>
+                                        <span class="fw-bold ${colorClass}">${p.bmi} (${p.bmiStatus})</span>
+                                    </div>
+                                </div>
+                            `;
+                });
+            }
+
+            // --- الأطباء ---
+            function addDoctor(e) {
+                e.preventDefault();
+                db.collection("health_doctors").add({
+                    name: document.getElementById('docName').value.trim(),
+                    specialty: document.getElementById('docSpecialty').value.trim(),
+                    phone: document.getElementById('docPhone').value.trim(),
+                    address: document.getElementById('docAddress').value.trim(),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => { document.getElementById('doctorForm').reset(); });
+            }
+
+            function renderDoctorsList() {
+                const container = document.getElementById('doctorsListContainer');
+                container.innerHTML = doctors.length === 0 ? '<p class="text-muted small text-center py-3">لا يوجد أطباء مسجلين</p>' : '';
+                doctors.forEach(d => {
+                    container.innerHTML += `
+                                <div class="list-group-item p-2 mb-2 rounded border d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-bold mb-0">${d.name} <span class="badge bg-success bg-opacity-10 text-success small">${d.specialty}</span></h6>
+                                        <span class="text-muted extra-small" style="font-size:0.75rem;"><i class="fa-solid fa-phone me-1"></i>${d.phone || 'بدون رقم'} | <i class="fa-solid fa-location-dot me-1"></i>${d.address || 'بدون عنوان'}</span>
+                                    </div>
+                                    <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="db.collection('health_doctors').doc('${d.id}').delete()"><i class="fa-solid fa-trash"></i></button>
+                                </div>`;
+                });
+            }
+
+            function updateDoctorDropdowns() {
+                const appSel = document.getElementById('appDocSelect');
+                const histSel = document.getElementById('histDocSelect');
+                let opts = '<option value="">اختر الطبيب...</option>';
+                doctors.forEach(d => { opts += `<option value="${d.name}">${d.name} (${d.specialty})</option>`; });
+                appSel.innerHTML = opts; histSel.innerHTML = opts;
+            }
+
+            function addAppointment(e) {
+                e.preventDefault();
+                db.collection("health_appointments").add({
+                    doctor: document.getElementById('appDocSelect').value,
+                    dateTime: document.getElementById('appDateTime').value,
+                    notes: document.getElementById('appNotes').value.trim(),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => { document.getElementById('appointmentForm').reset(); alert('تم حفظ الموعد وتفعيل التنبيه!'); });
+            }
+
+            function renderAppointmentsList() {
+                const container = document.getElementById('appointmentsListContainer');
+                container.innerHTML = appointments.length === 0 ? '<p class="text-muted small text-center py-3">لا توجد مواعيد قادمة</p>' : '';
+                appointments.forEach(a => {
+                    container.innerHTML += `
+                                <div class="list-group-item p-2 mb-2 rounded border d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-bold mb-0 text-primary"><i class="fa-regular fa-clock me-1"></i> ${a.dateTime.replace('T', ' ')}</h6>
+                                        <span class="text-dark small">مع: ${a.doctor} | ${a.notes}</span>
+                                    </div>
+                                    <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="db.collection('health_appointments').doc('${a.id}').delete()"><i class="fa-solid fa-trash"></i></button>
+                                </div>`;
+                });
+            }
+
+            function addVisitHistory(e) {
+                e.preventDefault();
+                db.collection("health_visit_history").add({
+                    doctor: document.getElementById('histDocSelect').value,
+                    date: document.getElementById('histDate').value,
+                    reason: document.getElementById('histReason').value.trim(),
+                    diagnosis: document.getElementById('histDiagnosis').value.trim(),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => { document.getElementById('visitHistoryForm').reset(); });
+            }
+
+            function renderVisitHistoryList() {
+                const container = document.getElementById('visitHistoryListContainer');
+                container.innerHTML = visitHistory.length === 0 ? '<p class="text-muted small text-center py-3">لا يوجد سجل زيارات سابقة</p>' : '';
+                visitHistory.forEach(v => {
+                    container.innerHTML += `
+                                <div class="list-group-item p-2 mb-2 rounded border">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="fw-bold mb-1">${v.doctor} <span class="text-muted small">(${v.date})</span></h6>
+                                        <button class="btn btn-outline-danger btn-sm py-0 px-1" onclick="db.collection('health_visit_history').doc('${v.id}').delete()"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                    <p class="mb-0 small text-danger"><b>السبب:</b> ${v.reason}</p>
+                                    <p class="mb-0 small text-muted"><b>التشخيص والتعليمات:</b> ${v.diagnosis}</p>
+                                </div>`;
+                });
+            }
+
+            // --- الأدوية والروشتات ---
+            function previewRxImage(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const r = new FileReader();
+                    r.onload = function (ev) {
+                        selectedRxBase64 = ev.target.result;
+                        document.getElementById('rxPreview').src = selectedRxBase64;
+                        document.getElementById('rxPreviewBox').classList.remove('d-none');
+                        document.getElementById('saveRxBtn').removeAttribute('disabled');
+                    };
+                    r.readAsDataURL(file);
+                }
+            }
+
+            function addRxImage(e) {
+                e.preventDefault();
+                if (selectedRxBase64) {
+                    db.collection("health_rx_images").add({
+                        title: document.getElementById('rxTitle').value.trim(),
+                        url: selectedRxBase64,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(() => {
+                        document.getElementById('rxForm').reset();
+                        document.getElementById('rxPreviewBox').classList.add('d-none');
+                        document.getElementById('saveRxBtn').setAttribute('disabled', 'true');
+                        selectedRxBase64 = "";
+                    });
+                }
+            }
+
+            function renderRxImagesGrid() {
+                const container = document.getElementById('rxImagesGrid');
+                container.innerHTML = rxImages.length === 0 ? '<div class="col-12 text-muted small text-center py-3">لا توجد روشتات أو تحاليل محفوظة</div>' : '';
+                rxImages.forEach(img => {
+                    container.innerHTML += `
+                                <div class="col-4 col-md-3">
+                                    <div class="image-thumb-card shadow-sm">
+                                        <img src="${img.url}" alt="${img.title}">
+                                        <button class="btn btn-danger btn-sm position-absolute top-0 end-0 p-1 py-0 m-1" onclick="db.collection('health_rx_images').doc('${img.id}').delete()"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                    <span class="d-block extra-small text-truncate text-center mt-1" style="font-size:0.75rem;">${img.title}</span>
+                                </div>`;
+                });
+            }
+
+            function addMedicine(e) {
+                e.preventDefault();
+                db.collection("health_medicines").add({
+                    name: document.getElementById('medName').value.trim(),
+                    dose: document.getElementById('medDose').value.trim(),
+                    stock: parseInt(document.getElementById('medStock').value),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => { document.getElementById('medForm').reset(); });
+            }
+
+            function renderMedsList() {
+                const container = document.getElementById('medsListContainer');
+                container.innerHTML = medicines.length === 0 ? '<p class="text-muted small text-center py-3">جدول الأدوية فارغ</p>' : '';
+                medicines.forEach(m => {
+                    let isLow = m.stock <= 3;
+                    container.innerHTML += `
+                                <div class="list-group-item p-2 mb-2 rounded border d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-bold mb-0 text-dark">${m.name} <span class="badge ${isLow ? 'bg-danger' : 'bg-success'} ms-2">${isLow ? 'اقترب من النفاد: ' + m.stock : 'الكمية: ' + m.stock}</span></h6>
+                                        <span class="text-muted small"><i class="fa-solid fa-clock me-1"></i>${m.dose}</span>
+                                    </div>
+                                    <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="db.collection('health_medicines').doc('${m.id}').delete()"><i class="fa-solid fa-trash"></i></button>
+                                </div>`;
+                });
+            }
+
+            // --- مؤشرات الصحة الحيوية ---
+            function addVitalRecord(e) {
+                e.preventDefault();
+                db.collection("health_vitals").add({
+                    type: document.getElementById('vitalType').value,
+                    value: document.getElementById('vitalValue').value.trim(),
+                    date: document.getElementById('vitalDate').value,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => { document.getElementById('vitalsForm').reset(); });
+            }
+
+            function renderVitalsList() {
+                const container = document.getElementById('vitalsListContainer');
+                container.innerHTML = vitals.length === 0 ? '<p class="text-muted small text-center py-3">لا توجد قراءات مضافة</p>' : '';
+                vitals.forEach(v => {
+                    container.innerHTML += `
+                                <div class="list-group-item p-2 mb-2 rounded border d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-bold mb-0 text-danger">${v.type}: <span class="text-dark">${v.value}</span></h6>
+                                        <span class="text-muted small"><i class="fa-regular fa-calendar me-1"></i>التاريخ: ${v.date}</span>
+                                    </div>
+                                    <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="db.collection('health_vitals').doc('${v.id}').delete()"><i class="fa-solid fa-trash"></i></button>
+                                </div>`;
+                });
+            }
+    </script>
+</body>
+</html>

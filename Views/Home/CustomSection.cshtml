@@ -1,0 +1,193 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewBag.SectionTitle - Smart Assistant</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <style>
+            body {
+                font-family: 'Cairo', sans-serif;
+                background-color: #f8fafc;
+                min-height: 100vh;
+                display: flex;
+                margin: 0;
+            }
+
+            .sidebar {
+                width: 260px;
+                background: #1e293b;
+                color: #fff;
+                display: flex;
+                flex-direction: column;
+                padding: 1.5rem 1rem;
+            }
+
+            .sidebar-brand {
+                font-size: 1.4rem;
+                font-weight: 700;
+                color: #38bdf8;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 2.5rem;
+            }
+
+            .nav-link-custom {
+                color: #94a3b8;
+                padding: 0.8rem 1rem;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                text-decoration: none;
+                font-weight: 600;
+                margin-bottom: 0.5rem;
+            }
+
+                .nav-link-custom:hover, .nav-link-custom.active {
+                    background-color: #2563eb;
+                    color: #ffffff;
+                }
+
+            .main-content {
+                flex: 1;
+                padding: 2rem;
+                overflow-y: auto;
+            }
+
+            .card-custom {
+                background: #ffffff;
+                border-radius: 16px;
+                border: 1px solid #e2e8f0;
+                padding: 1.5rem;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+                margin-bottom: 1.5rem;
+            }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fa-solid fa-brain"></i>
+            <span>Smart Assistant</span>
+        </div>
+        <nav class="w-100">
+            <a href="/Home/Dashboard" class="nav-link-custom">
+                <i class="fa-solid fa-house"></i> الرئيسية
+            </a>
+            <a href="/Finance/Index" class="nav-link-custom">
+                <i class="fa-solid fa-wallet"></i> الشؤون المالية
+            </a>
+            <a href="/Home/Memory" class="nav-link-custom">
+                <i class="fa-solid fa-book-bookmark"></i> الذاكرة الشخصية
+            </a>
+            <a href="/Home/Health" class="nav-link-custom">
+                <i class="fa-solid fa-heart-pulse"></i> الصحة
+            </a>
+            <a href="/Home/Entertainment" class="nav-link-custom">
+                <i class="fa-solid fa-gamepad"></i> الترفيه
+            </a>
+            <a href="/Home/PersonalRecords" class="nav-link-custom">
+                <i class="fa-solid fa-folder-open"></i> السجلات الشخصية
+            </a>
+        </nav>
+        <div class="mt-auto w-100 pt-4 border-top border-secondary">
+            <a href="/Account/Login" class="nav-link-custom text-danger">
+                <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1">قسم: @ViewBag.SectionTitle ☁️</h3>
+                <p class="text-muted mb-0">قسم مخصص جديد متصل بالسحابة</p>
+            </div>
+            <a href="/Home/Dashboard" class="btn btn-outline-secondary btn-sm">
+                <i class="fa-solid fa-arrow-right me-1"></i> العودة للداشبورد
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-5">
+                <div class="card-custom">
+                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-plus me-1"></i> إضافة عنصر جديد</h6>
+                    <form id="customItemForm" onsubmit="addCustomItem(event)">
+                        <input type="text" id="itemTitle" class="form-control form-control-sm mb-2" placeholder="العنوان / اسم البيان" required autocomplete="off">
+                        <textarea id="itemDetails" class="form-control form-control-sm mb-3" rows="3" placeholder="التفاصيل أو الملاحظات" required></textarea>
+                        <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">حفظ العنصر</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <div class="card-custom">
+                    <h6 class="fw-bold mb-3">السجلات المحفوظة في هذا القسم:</h6>
+                    <div class="list-group" id="customItemsList" style="max-height: 380px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+            const firebaseConfig = {
+                apiKey: "AIzaSyCth_4KFFBASVtQvZ8qcW-fWtaSTK7Y-Jg",
+                authDomain: "smartassistant-web.firebaseapp.com",
+                projectId: "smartassistant-web",
+                storageBucket: "smartassistant-web.firebasestorage.app",
+                messagingSenderId: "882536781365",
+                appId: "1:882536781365:web:f06cab966d9479b21637c"
+            };
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+            const sectionId = "@ViewBag.SectionId";
+
+            window.addEventListener('DOMContentLoaded', () => {
+                loadCustomItems();
+            });
+
+            function addCustomItem(e) {
+                e.preventDefault();
+                db.collection("custom_sections_data").add({
+                    sectionId: sectionId,
+                    title: document.getElementById('itemTitle').value.trim(),
+                    details: document.getElementById('itemDetails').value.trim(),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    document.getElementById('customItemForm').reset();
+                });
+            }
+
+            function loadCustomItems() {
+                db.collection("custom_sections_data").where("sectionId", "==", sectionId).onSnapshot(s => {
+                    const container = document.getElementById('customItemsList');
+                    container.innerHTML = s.empty ? '<p class="text-muted small text-center py-3">لا توجد بيانات مسجلة هنا بعد</p>' : '';
+                    s.forEach(doc => {
+                        const d = doc.data();
+                        container.innerHTML += `
+                                    <div class="list-group-item p-3 mb-2 rounded border d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="fw-bold mb-1">${d.title}</h6>
+                                            <p class="text-muted small mb-0">${d.details}</p>
+                                        </div>
+                                        <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="db.collection('custom_sections_data').doc('${doc.id}').delete()"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                `;
+                    });
+                });
+            }
+    </script>
+</body>
+</html>

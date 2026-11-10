@@ -1,0 +1,592 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>الشؤون المالية - Smart Assistant</title>
+
+    <!-- Bootstrap 5 RTL -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Cairo) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- jsPDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+    <style>
+            body {
+                font-family: 'Cairo', sans-serif;
+                background-color: #f8fafc;
+                min-height: 100vh;
+                display: flex;
+                margin: 0;
+            }
+
+            .sidebar {
+                width: 260px;
+                background: #1e293b;
+                color: #fff;
+                display: flex;
+                flex-direction: column;
+                padding: 1.5rem 1rem;
+            }
+
+            .sidebar-brand {
+                font-size: 1.4rem;
+                font-weight: 700;
+                color: #38bdf8;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 2.5rem;
+            }
+
+            .nav-link-custom {
+                color: #94a3b8;
+                padding: 0.8rem 1rem;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                text-decoration: none;
+                font-weight: 600;
+                margin-bottom: 0.5rem;
+                transition: all 0.3s ease;
+            }
+
+                .nav-link-custom:hover, .nav-link-custom.active {
+                    background-color: #2563eb;
+                    color: #ffffff;
+                }
+
+            .main-content {
+                flex: 1;
+                padding: 2rem;
+                overflow-y: auto;
+            }
+
+            .card-custom {
+                background: #ffffff;
+                border-radius: 16px;
+                border: 1px solid #e2e8f0;
+                padding: 1.5rem;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+                margin-bottom: 1.5rem;
+            }
+
+            .stat-card {
+                border-radius: 14px;
+                padding: 1.2rem;
+                color: #fff;
+            }
+
+            .bg-budget {
+                background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            }
+
+            .bg-expense {
+                background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+            }
+
+            .bg-debt {
+                background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            }
+
+            .bg-requests {
+                background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+            }
+
+            .completed-request {
+                background-color: #f1f5f9 !important;
+                text-decoration: line-through;
+                color: #64748b !important;
+            }
+    </style>
+</head>
+<body>
+
+    <!-- القائمة الجانبية -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fa-solid fa-brain"></i>
+            <span>Smart Assistant</span>
+        </div>
+
+        <nav class="w-100">
+            <a href="/Home/Dashboard" class="nav-link-custom">
+                <i class="fa-solid fa-house"></i> الرئيسية
+            </a>
+            <a href="/Finance/Index" class="nav-link-custom active">
+                <i class="fa-solid fa-wallet"></i> الشؤون المالية
+            </a>
+            <a href="#" class="nav-link-custom">
+                <i class="fa-solid fa-book-bookmark"></i> الذاكرة الشخصية
+            </a>
+            <a href="#" class="nav-link-custom">
+                <i class="fa-solid fa-heart-pulse"></i> الصحة
+            </a>
+            <a href="#" class="nav-link-custom">
+                <i class="fa-solid fa-gamepad"></i> الترفيه
+            </a>
+            <a href="#" class="nav-link-custom">
+                <i class="fa-solid fa-folder-open"></i> السجلات الشخصية
+            </a>
+        </nav>
+
+        <div class="mt-auto w-100 pt-4 border-top border-secondary">
+            <a href="/Account/Login" class="nav-link-custom text-danger">
+                <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
+            </a>
+        </div>
+    </aside>
+
+    <!-- المحتوى الرئيسي -->
+    <main class="main-content">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1">الشؤون المالية (متصل بالسحابة ☁️)</h3>
+                <p class="text-muted mb-0">إدارة المصاريف، الميزانية، الديون، طلبات الأشخاص، والأرشيف</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary btn-sm" onclick="exportToPDF()">
+                    <i class="fa-solid fa-file-pdf me-1"></i> تحميل التقرير PDF
+                </button>
+                <a href="/Home/Dashboard" class="btn btn-outline-secondary btn-sm">
+                    <i class="fa-solid fa-arrow-right me-1"></i> العودة للداشبورد
+                </a>
+            </div>
+        </div>
+
+        <!-- ملخص إحصائيات الميزانية والديون والطلبات -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card bg-budget shadow-sm">
+                    <span class="small opacity-75">الميزانية المتبقية</span>
+                    <h4 class="fw-bold mt-2 mb-0" id="remainingBudget">0 د.ع</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card bg-expense shadow-sm">
+                    <span class="small opacity-75">إجمالي المصاريف</span>
+                    <h4 class="fw-bold mt-2 mb-0" id="totalExpenses">0 د.ع</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card bg-debt shadow-sm">
+                    <span class="small opacity-75">إجمالي الديون</span>
+                    <h4 class="fw-bold mt-2 mb-0" id="totalDebts">0 د.ع</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card bg-requests shadow-sm">
+                    <span class="small opacity-75">طلبات الأشخاص النشطة</span>
+                    <h4 class="fw-bold mt-2 mb-0" id="totalRequests">0 د.ع</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- العمود الأيمن -->
+            <div class="col-lg-6">
+                <!-- الميزانية الشهرية -->
+                <div class="card-custom">
+                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-coins text-warning me-2"></i> تحديد الميزانية الشهرية</h5>
+                    <div class="input-group mb-2">
+                        <input type="number" id="monthlyBudgetInput" class="form-control" placeholder="أدخل الميزانية بالدينار العراقي">
+                        <span class="input-group-text">د.ع</span>
+                        <button class="btn btn-primary" onclick="setMonthlyBudget()">حفظ الميزانية</button>
+                    </div>
+                </div>
+
+                <!-- تسجيل مصروف يومي -->
+                <div class="card-custom">
+                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-cart-plus text-danger me-2"></i> تسجيل مصروف جديد</h5>
+                    <form id="expenseForm" onsubmit="addExpense(event)">
+                        <div class="mb-3">
+                            <label class="form-label">المبلغ (د.ع)</label>
+                            <input type="number" id="expenseAmount" class="form-control" placeholder="مثلاً: 10000" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">الفئة</label>
+                            <select id="expenseCategory" class="form-select" onchange="toggleCustomCategory(this)">
+                                <option value="بنزين">بنزين / وقود</option>
+                                <option value="مسواق منزل">مسواق منزل</option>
+                                <option value="مطاعم وكافيهات">مطاعم وكافيهات</option>
+                                <option value="صيانة ومصاريف سيارة">صيانة ومصاريف سيارة</option>
+                                <option value="فواتير واشتراكات">فواتير واشتراكات</option>
+                                <option value="أخرى">فئة أخرى (كتابة يدوية)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3 d-none" id="customCategoryDiv">
+                            <label class="form-label">اكتب الفئة الجديدة</label>
+                            <input type="text" id="customCategoryInput" class="form-control" placeholder="اكتب الفئة هنا...">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">ملاحظات / التفاصيل (اختياري)</label>
+                            <input type="text" id="expenseNote" class="form-control" placeholder="مثلاً: تفويل بنزين للسيارة">
+                        </div>
+
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="fa-solid fa-plus me-1"></i> خصم وإضافة المصروف
+                        </button>
+                    </form>
+                </div>
+
+                <!-- 5. قسم طلبات الأشخاص والديون المؤقتة الجديدة -->
+                <div class="card-custom border-teal">
+                    <h5 class="fw-bold mb-3 text-teal"><i class="fa-solid fa-list-check text-success me-2"></i> 5. تسجيل طلبات الأشخاص المستحقة</h5>
+                    <form id="requestForm" onsubmit="addRequest(event)">
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-6">
+                                <label class="form-label small">اسم الشخص / الجهة</label>
+                                <input type="text" id="reqPerson" class="form-control form-control-sm" placeholder="اسم صاحب الطلب" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small">المبلغ المطلوب (د.ع)</label>
+                                <input type="number" id="reqAmount" class="form-control form-control-sm" placeholder="المبلغ" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small">ملاحظات الطلب والتفاصيل</label>
+                            <input type="text" id="reqNote" class="form-control form-control-sm" placeholder="تفاصيل الطلب للتذكير...">
+                        </div>
+                        <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">
+                            <i class="fa-solid fa-bookmark me-1"></i> إضافة الطلب للسحابة
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- العمود الأيسر -->
+            <div class="col-lg-6">
+                <!-- إدارة الديون -->
+                <div class="card-custom mb-4">
+                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-hand-holding-dollar text-primary me-2"></i> إدارة الديون</h5>
+                    <form id="debtForm" onsubmit="addDebt(event)" class="mb-3 pb-2 border-bottom">
+                        <div class="row g-2">
+                            <div class="col-md-5">
+                                <input type="text" id="debtPerson" class="form-control" placeholder="اسم الشخص" required>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="number" id="debtAmount" class="form-control" placeholder="المبلغ (د.ع)" required>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-warning text-dark w-100 fw-bold">إضافة دين</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="table-responsive" style="max-height: 150px; overflow-y: auto;">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>الشخص</th>
+                                    <th>المتبقي</th>
+                                    <th>تسديد</th>
+                                </tr>
+                            </thead>
+                            <tbody id="debtsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- جدول عرض طلبات الأشخاص مع خيار (تم التسديد) والحذف والاحتفاظ للتذكير -->
+                <div class="card-custom mb-4">
+                    <h5 class="fw-bold mb-3 text-secondary"><i class="fa-solid fa-clipboard-list me-2"></i> قائمة طلبات الأشخاص والتذكيرات</h5>
+                    <div class="table-responsive" style="max-height: 180px; overflow-y: auto;">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>الشخص والطلب</th>
+                                    <th>المبلغ</th>
+                                    <th>حالة التسديد</th>
+                                    <th>إجراءات (حذف/تذكير)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="requestsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- سجل المصاريف الأخيرة -->
+                <div class="card-custom">
+                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-list-check text-success me-2"></i> سجل المصاريف المسجلة</h5>
+                    <div class="table-responsive" style="max-height: 160px; overflow-y: auto;">
+                        <table class="table table-striped align-middle">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>الفئة</th>
+                                    <th>المبلغ</th>
+                                    <th>التفاصيل</th>
+                                    <th>حذف</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expensesTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+            const firebaseConfig = {
+                apiKey: "AIzaSyCth_4KFFBASVtQvZ8qcW-fWtaSTK7Y-Jg",
+                authDomain: "smartassistant-web.firebaseapp.com",
+                projectId: "smartassistant-web",
+                storageBucket: "smartassistant-web.firebasestorage.app",
+                messagingSenderId: "882536781365",
+                appId: "1:882536781365:web:f06cab966d9479b21637c"
+            };
+
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            const db = firebase.firestore();
+
+            let budget = 0;
+            let expenses = [];
+            let debts = [];
+            let requests = [];
+            let archives = [];
+
+            // جلب البيانات من سحابية Firestore بشكل حي (Real-time)
+            function loadDataFromFirebase() {
+                db.collection("finance").doc("settings").onSnapshot((doc) => {
+                    if (doc.exists) {
+                        budget = doc.data().budget || 0;
+                        document.getElementById('monthlyBudgetInput').value = budget > 0 ? budget : '';
+                    }
+                    updateUI();
+                });
+
+                db.collection("finance_expenses").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+                    expenses = [];
+                    snapshot.forEach((doc) => expenses.push({ id: doc.id, ...doc.data() }));
+                    updateUI();
+                });
+
+                db.collection("finance_debts").onSnapshot((snapshot) => {
+                    debts = [];
+                    snapshot.forEach((doc) => debts.push({ id: doc.id, ...doc.data() }));
+                    updateUI();
+                });
+
+                // جلب طلبات الأشخاص
+                db.collection("finance_requests").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+                    requests = [];
+                    snapshot.forEach((doc) => requests.push({ id: doc.id, ...doc.data() }));
+                    updateUI();
+                });
+            }
+
+            function setMonthlyBudget() {
+                const val = parseFloat(document.getElementById('monthlyBudgetInput').value);
+                if (!isNaN(val) && val >= 0) {
+                    budget = val;
+                    db.collection("finance").doc("settings").set({ budget: budget })
+                        .then(() => alert('تم حفظ الميزانية سحابياً بنجاح!'));
+                }
+            }
+
+            function toggleCustomCategory(select) {
+                const customDiv = document.getElementById('customCategoryDiv');
+                if (select.value === 'أخرى') customDiv.classList.remove('d-none');
+                else customDiv.classList.add('d-none');
+            }
+
+            function addExpense(e) {
+                e.preventDefault();
+                const amount = parseFloat(document.getElementById('expenseAmount').value);
+                const categorySelect = document.getElementById('expenseCategory').value;
+                const customCategory = document.getElementById('customCategoryInput').value;
+                const note = document.getElementById('expenseNote').value;
+                let finalCategory = categorySelect === 'أخرى' ? customCategory : categorySelect;
+
+                if (!isNaN(amount) && amount > 0) {
+                    db.collection("finance_expenses").add({
+                        category: finalCategory || 'مصروف عام',
+                        amount: amount,
+                        note: note || '-',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(() => {
+                        document.getElementById('expenseForm').reset();
+                        document.getElementById('customCategoryDiv').classList.add('d-none');
+                    });
+                }
+            }
+
+            function deleteExpense(id) {
+                db.collection("finance_expenses").doc(id).delete();
+            }
+
+            function addDebt(e) {
+                e.preventDefault();
+                const person = document.getElementById('debtPerson').value.trim();
+                const amount = parseFloat(document.getElementById('debtAmount').value);
+
+                if (person && !isNaN(amount) && amount > 0) {
+                    db.collection("finance_debts").add({
+                        person: person,
+                        amount: amount,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(() => document.getElementById('debtForm').reset());
+                }
+            }
+
+            function payDebt(id) {
+                const payAmount = parseFloat(document.getElementById(`payInput_${id}`).value);
+                if (!isNaN(payAmount) && payAmount > 0) {
+                    const debt = debts.find(d => d.id === id);
+                    if (debt) {
+                        const newAmount = debt.amount - payAmount;
+                        if (newAmount <= 0) {
+                            db.collection("finance_debts").doc(id).delete();
+                        } else {
+                            db.collection("finance_debts").doc(id).update({ amount: newAmount });
+                        }
+                    }
+                }
+            }
+
+            // دوال قسم طلبات الأشخاص الجديدة
+            function addRequest(e) {
+                e.preventDefault();
+                const person = document.getElementById('reqPerson').value.trim();
+                const amount = parseFloat(document.getElementById('reqAmount').value);
+                const note = document.getElementById('reqNote').value.trim();
+
+                if (person && !isNaN(amount)) {
+                    db.collection("finance_requests").add({
+                        person: person,
+                        amount: amount,
+                        note: note || '-',
+                        isPaid: false, // افتراضياً لم يتم التسديد
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(() => document.getElementById('requestForm').reset());
+                }
+            }
+
+            function toggleRequestPaid(id, currentStatus) {
+                db.collection("finance_requests").doc(id).update({
+                    isPaid: !currentStatus
+                });
+            }
+
+            function deleteRequest(id) {
+                if (confirm('هل أنت متأكد من حذف هذا الطلب نهائياً؟ (يمكنك تركه دون حذف للاحتفاظ بالتذكير).')) {
+                    db.collection("finance_requests").doc(id).delete();
+                }
+            }
+
+            function updateUI() {
+                let totalSpent = expenses.reduce((acc, ex) => acc + (ex.amount || 0), 0);
+                let remaining = budget - totalSpent;
+                let totalDebtVal = debts.reduce((acc, d) => acc + (d.amount || 0), 0);
+
+                // حساب طلبات الأشخاص غير المسددة
+                let activeRequestsVal = requests.filter(r => !r.isPaid).reduce((acc, r) => acc + (r.amount || 0), 0);
+
+                document.getElementById('remainingBudget').innerText = remaining.toLocaleString() + ' د.ع';
+                document.getElementById('totalExpenses').innerText = totalSpent.toLocaleString() + ' د.ع';
+                document.getElementById('totalDebts').innerText = totalDebtVal.toLocaleString() + ' د.ع';
+                document.getElementById('totalRequests').innerText = activeRequestsVal.toLocaleString() + ' د.ع';
+
+                // جدول المصاريف
+                const expTbody = document.getElementById('expensesTableBody');
+                expTbody.innerHTML = expenses.length === 0 ? `<tr><td colspan="4" class="text-center text-muted small">لا توجد مصاريف</td></tr>` : '';
+                expenses.forEach(ex => {
+                    expTbody.innerHTML += `
+                                            <tr>
+                                                <td class="fw-bold small">${ex.category}</td>
+                                                <td class="text-danger small fw-bold">${(ex.amount || 0).toLocaleString()} د.ع</td>
+                                                <td class="text-muted small">${ex.note}</td>
+                                                <td><button class="btn btn-outline-danger btn-sm py-0 px-1" onclick="deleteExpense('${ex.id}')"><i class="fa-solid fa-trash"></i></button></td>
+                                            </tr>
+                                        `;
+                });
+
+                // جدول الديون
+                const debtTbody = document.getElementById('debtsTableBody');
+                debtTbody.innerHTML = debts.length === 0 ? `<tr><td colspan="3" class="text-center text-muted small">لا توجد ديون</td></tr>` : '';
+                debts.forEach(d => {
+                    debtTbody.innerHTML += `
+                                            <tr>
+                                                <td class="fw-bold small">${d.person}</td>
+                                                <td class="text-warning text-dark fw-bold small">${(d.amount || 0).toLocaleString()} د.ع</td>
+                                                <td>
+                                                    <div class="input-group input-group-sm" style="max-width: 140px;">
+                                                        <input type="number" id="payInput_${d.id}" class="form-control form-control-sm" placeholder="المبلغ">
+                                                        <button class="btn btn-success btn-sm" onclick="payDebt('${d.id}')">خصم</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        `;
+                });
+
+                // جدول طلبات الأشخاص الجديدة
+                const reqTbody = document.getElementById('requestsTableBody');
+                reqTbody.innerHTML = requests.length === 0 ? `<tr><td colspan="4" class="text-center text-muted small">لا توجد طلبات مسجلة</td></tr>` : '';
+                requests.forEach(r => {
+                    let rowClass = r.isPaid ? 'completed-request' : '';
+                    reqTbody.innerHTML += `
+                                            <tr class="${rowClass}">
+                                                <td>
+                                                    <span class="fw-bold small">${r.person}</span><br>
+                                                    <span class="text-muted" style="font-size: 0.75rem;">${r.note}</span>
+                                                </td>
+                                                <td class="fw-bold small">${(r.amount || 0).toLocaleString()} د.ع</td>
+                                                <td>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" role="switch" id="check_${r.id}" ${r.isPaid ? 'checked' : ''} onclick="toggleRequestPaid('${r.id}', ${r.isPaid})">
+                                                        <label class="form-check-label small" for="check_${r.id}">${r.isPaid ? 'تم التسديد' : 'قيد الانتظار'}</label>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-outline-danger btn-sm py-0 px-1" onclick="deleteRequest('${r.id}')" title="حذف الطلب نهائياً"><i class="fa-solid fa-trash"></i></button>
+                                                    <span class="text-muted small ms-1" title="محتفظ به للتذكير">📌</span>
+                                                </td>
+                                            </tr>
+                                        `;
+                });
+            }
+
+            function exportToPDF() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(18);
+                doc.text("Smart Assistant - Financial Report", 105, 20, { align: "center" });
+
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "normal");
+                doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 35);
+                doc.text(`Monthly Budget: ${budget.toLocaleString()} IQD`, 20, 45);
+
+                let totalSpent = expenses.reduce((acc, ex) => acc + ex.amount, 0);
+                doc.text(`Total Expenses: ${totalSpent.toLocaleString()} IQD`, 20, 55);
+                doc.text(`Remaining Budget: ${(budget - totalSpent).toLocaleString()} IQD`, 20, 65);
+
+                doc.save("Smart_Assistant_Financial_Report.pdf");
+            }
+
+            loadDataFromFirebase();
+    </script>
+</body>
+</html>

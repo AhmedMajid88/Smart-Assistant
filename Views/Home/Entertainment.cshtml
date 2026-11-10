@@ -1,0 +1,510 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>قسم الترفيه - Smart Assistant</title>
+
+    <!-- Bootstrap 5 RTL -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Cairo) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+    <style>
+            body {
+                font-family: 'Cairo', sans-serif;
+                background-color: #f8fafc;
+                min-height: 100vh;
+                display: flex;
+                margin: 0;
+            }
+
+            .sidebar {
+                width: 260px;
+                background: #1e293b;
+                color: #fff;
+                display: flex;
+                flex-direction: column;
+                padding: 1.5rem 1rem;
+            }
+
+            .sidebar-brand {
+                font-size: 1.4rem;
+                font-weight: 700;
+                color: #38bdf8;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 2.5rem;
+            }
+
+            .nav-link-custom {
+                color: #94a3b8;
+                padding: 0.8rem 1rem;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                text-decoration: none;
+                font-weight: 600;
+                margin-bottom: 0.5rem;
+                transition: all 0.3s ease;
+            }
+
+                .nav-link-custom:hover, .nav-link-custom.active {
+                    background-color: #2563eb;
+                    color: #ffffff;
+                }
+
+            .main-content {
+                flex: 1;
+                padding: 2rem;
+                overflow-y: auto;
+            }
+
+            /* كروت المجلدات الرئيسية لقسم الترفيه */
+            .ent-folder-card {
+                background: linear-gradient(135deg, #0f172a 0%, #311042 100%);
+                color: #fff;
+                border-radius: 18px;
+                padding: 1.8rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                border: 1px solid #581c87;
+                height: 100%;
+            }
+
+                .ent-folder-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+                    border-color: #c084fc;
+                }
+
+            .folder-icon-purple {
+                font-size: 3rem;
+                color: #c084fc;
+            }
+
+            .folder-icon-amber {
+                font-size: 3rem;
+                color: #fbbf24;
+            }
+
+            .folder-icon-teal {
+                font-size: 3rem;
+                color: #2dd4bf;
+            }
+
+            input[type="date"] {
+                direction: ltr;
+                text-align: right;
+            }
+    </style>
+</head>
+<body>
+
+    <!-- القائمة الجانبية -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fa-solid fa-brain"></i>
+            <span>Smart Assistant</span>
+        </div>
+
+        <nav class="w-100">
+            <a href="/Home/Dashboard" class="nav-link-custom">
+                <i class="fa-solid fa-house"></i> الرئيسية
+            </a>
+            <a href="/Finance/Index" class="nav-link-custom">
+                <i class="fa-solid fa-wallet"></i> الشؤون المالية
+            </a>
+            <a href="/Home/Memory" class="nav-link-custom">
+                <i class="fa-solid fa-book-bookmark"></i> الذاكرة الشخصية
+            </a>
+            <a href="/Home/Health" class="nav-link-custom">
+                <i class="fa-solid fa-heart-pulse"></i> الصحة
+            </a>
+            <a href="/Home/Entertainment" class="nav-link-custom active">
+                <i class="fa-solid fa-gamepad"></i> الترفيه
+            </a>
+            <a href="#" class="nav-link-custom">
+                <i class="fa-solid fa-folder-open"></i> السجلات الشخصية
+            </a>
+        </nav>
+
+        <div class="mt-auto w-100 pt-4 border-top border-secondary">
+            <a href="/Account/Login" class="nav-link-custom text-danger">
+                <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
+            </a>
+        </div>
+    </aside>
+
+    <!-- المحتوى الرئيسي -->
+    <main class="main-content">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1">قسم الترفيه والحياة الشخصية (متصل بالسحابة ☁️)</h3>
+                <p class="text-muted mb-0">إدارة قوائم القراءة والمشاهدة، المناسبات والفعاليات، ومفكرة الهوايات والأفكار</p>
+            </div>
+            <a href="/Home/Dashboard" class="btn btn-outline-secondary btn-sm">
+                <i class="fa-solid fa-arrow-right me-1"></i> العودة للداشبورد
+            </a>
+        </div>
+
+        <!-- المجلدات الثلاثة الرئيسية -->
+        <div class="row g-4">
+
+            <!-- 1. مجلد قائمة القراءة والمشاهدة -->
+            <div class="col-md-4">
+                <div class="ent-folder-card d-flex flex-column justify-content-between" onclick="openWatchModal()">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <i class="fa-solid fa-folder-closed folder-icon-purple"></i>
+                            <span class="badge bg-purple bg-opacity-20 text-light border border-purple px-3 py-2 rounded-pill" id="watchCountBadge">0 عناصر</span>
+                        </div>
+                        <h4 class="fw-bold text-white mb-2">قائمة القراءة والمشاهدة</h4>
+                        <p class="text-muted small">تسجيل الكتب، الأفلام، والمسلسلات التي ترغب بمتابعتها مع تقييمك الشخصي لما أنهيته.</p>
+                    </div>
+                    <div class="pt-3 border-top border-secondary text-end">
+                        <span class="btn btn-outline-light btn-sm rounded-pill px-3">
+                            <i class="fa-solid fa-folder-open me-1"></i> فتح السجل
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. مجلد المناسبات والتواريخ المهمة -->
+            <div class="col-md-4">
+                <div class="ent-folder-card d-flex flex-column justify-content-between" onclick="openEventsModal()">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <i class="fa-solid fa-folder-closed folder-icon-amber"></i>
+                            <span class="badge bg-warning bg-opacity-20 text-light border border-warning px-3 py-2 rounded-pill" id="eventsCountBadge">0 مناسبات</span>
+                        </div>
+                        <h4 class="fw-bold text-white mb-2">المناسبات والتواريخ المهمة</h4>
+                        <p class="text-muted small">أعياد الميلاد، التجديدات السنوية للوثائق والاشتراكات، والفعاليات مع العد التنازلي.</p>
+                    </div>
+                    <div class="pt-3 border-top border-secondary text-end">
+                        <span class="btn btn-outline-light btn-sm rounded-pill px-3">
+                            <i class="fa-solid fa-folder-open me-1"></i> فتح السجل
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. مجلد مفكرة الهوايات والأفكار -->
+            <div class="col-md-4">
+                <div class="ent-folder-card d-flex flex-column justify-content-between" onclick="openHobbiesModal()">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <i class="fa-solid fa-folder-closed folder-icon-teal"></i>
+                            <span class="badge bg-info bg-opacity-20 text-light border border-info px-3 py-2 rounded-pill" id="hobbiesCountBadge">0 أفكار</span>
+                        </div>
+                        <h4 class="fw-bold text-white mb-2">مفكرة الهوايات والأفكار</h4>
+                        <p class="text-muted small">أفكار الورشة اليدوية، الأماكن التي ترغب بزيارتها، والمشاريع الترفيهية الشخصية.</p>
+                    </div>
+                    <div class="pt-3 border-top border-secondary text-end">
+                        <span class="btn btn-outline-light btn-sm rounded-pill px-3">
+                            <i class="fa-solid fa-folder-open me-1"></i> فتح السجل
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- ========================================== -->
+    <!-- 1. Modal قائمة القراءة والمشاهدة -->
+    <!-- ========================================== -->
+    <div class="modal fade" id="watchModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-film text-purple me-2"></i> قائمة القراءة والمشاهدة</h5>
+                    <button type="button" class="btn-close btn-close-white ms-0 me-auto" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card p-3 border-0 bg-light rounded-3">
+                                <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-plus me-1"></i> إضافة كتاب أو فيلم أو مسلسل</h6>
+                                <form id="watchForm" onsubmit="addWatchItem(event)">
+                                    <input type="text" id="watchTitle" class="form-control form-control-sm mb-2" placeholder="اسم العنوان (كتاب، فيلم، مسلسل)" required autocomplete="off">
+                                    <select id="watchCategory" class="form-select form-select-sm mb-2" required>
+                                        <option value="فيلم">فيلم</option>
+                                        <option value="مسلسل">مسلسل</option>
+                                        <option value="كتاب">كتاب / رواية</option>
+                                    </select>
+                                    <select id="watchStatus" class="form-select form-select-sm mb-2" required>
+                                        <option value="أرغب بمشاهدته / قراءته">أرغب بمشاهدته / قراءته</option>
+                                        <option value="تم الإنجاز">تم الإنجاز ✅</option>
+                                    </select>
+                                    <select id="watchRating" class="form-select form-select-sm mb-3">
+                                        <option value="غير مقيم">التقييم الشخصي (إن أُنجز)</option>
+                                        <option value="⭐⭐⭐⭐⭐">⭐⭐⭐⭐⭐ (ممتاز)</option>
+                                        <option value="⭐⭐⭐⭐">⭐⭐⭐⭐ (جيد جداً)</option>
+                                        <option value="⭐⭐⭐">⭐⭐⭐ (متوسط)</option>
+                                        <option value="⭐⭐">⭐⭐ (ضعيف)</option>
+                                        <option value="⭐">⭐ (سيء)</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">حفظ في القائمة</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <h6 class="fw-bold mb-3">العناصر المسجلة:</h6>
+                            <div class="list-group" id="watchListContainer" style="max-height: 350px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إغلاق</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. Modal المناسبات والتواريخ المهمة -->
+    <!-- ========================================== -->
+    <div class="modal fade" id="eventsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-calendar-days text-warning me-2"></i> المناسبات والتواريخ المهمة</h5>
+                    <button type="button" class="btn-close btn-close-white ms-0 me-auto" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card p-3 border-0 bg-light rounded-3">
+                                <h6 class="fw-bold text-warning mb-3"><i class="fa-solid fa-clock-rotate-left me-1"></i> تسجيل مناسبة جديدة</h6>
+                                <form id="eventForm" onsubmit="addEventItem(event)">
+                                    <input type="text" id="eventTitle" class="form-control form-control-sm mb-2" placeholder="اسم المناسبة (عيد ميلاد، تجديد اشتراك...)" required autocomplete="off">
+                                    <input type="date" id="eventDate" class="form-control form-control-sm mb-3" required>
+                                    <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold text-dark">حفظ وتفعيل التنبيه</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <h6 class="fw-bold mb-3">سجل المناسبات والعد التنازلي:</h6>
+                            <div class="list-group" id="eventsListContainer" style="max-height: 350px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إغلاق</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 3. Modal مفكرة الهوايات والأفكار -->
+    <!-- ========================================== -->
+    <div class="modal fade" id="hobbiesModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-lightbulb text-info me-2"></i> مفكرة الهوايات والأفكار الإبداعية</h5>
+                    <button type="button" class="btn-close btn-close-white ms-0 me-auto" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card p-3 border-0 bg-light rounded-3">
+                                <h6 class="fw-bold text-info mb-3"><i class="fa-solid fa-pen-nib me-1"></i> تسجيل فكرة أو هواية</h6>
+                                <form id="hobbyForm" onsubmit="addHobbyItem(event)">
+                                    <input type="text" id="hobbyTitle" class="form-control form-control-sm mb-2" placeholder="عنوان الفكرة أو النشاط" required autocomplete="off">
+                                    <textarea id="hobbyDesc" class="form-control form-control-sm mb-3" rows="3" placeholder="تفاصيل الفكرة، أعمل ورشة، مكان للزيارة..." required></textarea>
+                                    <button type="submit" class="btn btn-info btn-sm w-100 fw-bold text-white">حفظ في المفكرة</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <h6 class="fw-bold mb-3">الأفكار والهوايات المحفوظة:</h6>
+                            <div class="list-group" id="hobbiesListContainer" style="max-height: 350px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إغلاق</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+            const firebaseConfig = {
+                apiKey: "AIzaSyCth_4KFFBASVtQvZ8qcW-fWtaSTK7Y-Jg",
+                authDomain: "smartassistant-web.firebaseapp.com",
+                projectId: "smartassistant-web",
+                storageBucket: "smartassistant-web.firebasestorage.app",
+                messagingSenderId: "882536781365",
+                appId: "1:882536781365:web:f06cab966d9479b21637c"
+            };
+
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            const db = firebase.firestore();
+
+            let watchList = [], eventsList = [], hobbiesList = [];
+            let watchModal, eventsModal, hobbiesModal;
+
+            window.addEventListener('DOMContentLoaded', () => {
+                watchModal = new bootstrap.Modal(document.getElementById('watchModal'));
+                eventsModal = new bootstrap.Modal(document.getElementById('eventsModal'));
+                hobbiesModal = new bootstrap.Modal(document.getElementById('hobbiesModal'));
+
+                document.getElementById('eventDate').value = new Date().toISOString().split('T')[0];
+
+                loadEntertainmentData();
+            });
+
+            function loadEntertainmentData() {
+                // 1. القراءة والمشاهدة
+                db.collection("ent_watchlist").orderBy("createdAt", "desc").onSnapshot(s => {
+                    watchList = [];
+                    s.forEach(d => watchList.push({ id: d.id, ...d.data() }));
+                    document.getElementById('watchCountBadge').innerText = `${watchList.length} عناصر`;
+                    renderWatchList();
+                });
+
+                // 2. المناسبات والتواريخ
+                db.collection("ent_events").orderBy("date", "asc").onSnapshot(s => {
+                    eventsList = [];
+                    s.forEach(d => eventsList.push({ id: d.id, ...d.data() }));
+                    document.getElementById('eventsCountBadge').innerText = `${eventsList.length} مناسبات`;
+                    renderEventsList();
+                });
+
+                // 3. مفكرة الهوايات
+                db.collection("ent_hobbies").orderBy("createdAt", "desc").onSnapshot(s => {
+                    hobbiesList = [];
+                    s.forEach(d => hobbiesList.push({ id: d.id, ...d.data() }));
+                    document.getElementById('hobbiesCountBadge').innerText = `${hobbiesList.length} أفكار`;
+                    renderHobbiesList();
+                });
+            }
+
+            function openWatchModal() { watchModal.show(); }
+            function openEventsModal() { eventsModal.show(); }
+            function openHobbiesModal() { hobbiesModal.show(); }
+
+            // --- 1. برمجيات القراءة والمشاهدة ---
+            function addWatchItem(e) {
+                e.preventDefault();
+                db.collection("ent_watchlist").add({
+                    title: document.getElementById('watchTitle').value.trim(),
+                    category: document.getElementById('watchCategory').value,
+                    status: document.getElementById('watchStatus').value,
+                    rating: document.getElementById('watchRating').value,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => { document.getElementById('watchForm').reset(); });
+            }
+
+            function renderWatchList() {
+                const container = document.getElementById('watchListContainer');
+                container.innerHTML = watchList.length === 0 ? '<p class="text-muted small text-center py-3">القائمة فارغة حالياً</p>' : '';
+                watchList.forEach(w => {
+                    let isDone = w.status === "تم الإنجاز";
+                    container.innerHTML += `
+                                <div class="list-group-item p-2 mb-2 rounded border d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-bold mb-0">${w.title} <span class="badge bg-secondary small">${w.category}</span></h6>
+                                        <span class="text-muted small">${w.status} ${isDone && w.rating !== 'غير مقيم' ? '| التقييم: ' + w.rating : ''}</span>
+                                    </div>
+                                    <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="db.collection('ent_watchlist').doc('${w.id}').delete()"><i class="fa-solid fa-trash"></i></button>
+                                </div>`;
+                });
+            }
+
+            // --- 2. برمجيات المناسبات والعد التنازلي ---
+            function addEventItem(e) {
+                e.preventDefault();
+                db.collection("ent_events").add({
+                    title: document.getElementById('eventTitle').value.trim(),
+                    date: document.getElementById('eventDate').value,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => { document.getElementById('eventForm').reset(); });
+            }
+
+            function renderEventsList() {
+                const container = document.getElementById('eventsListContainer');
+                container.innerHTML = eventsList.length === 0 ? '<p class="text-muted small text-center py-3">لا توجد مناسبات مسجلة</p>' : '';
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                eventsList.forEach(ev => {
+                    const eventDate = new Date(ev.date);
+                    const diffTime = eventDate - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    let badgeText = "";
+                    let badgeClass = "bg-warning text-dark";
+                    if (diffDays > 0) {
+                        badgeText = `متبقي ${diffDays} يوم`;
+                    } else if (diffDays === 0) {
+                        badgeText = "اليوم! 🎉";
+                        badgeClass = "bg-success text-white";
+                    } else {
+                        badgeText = "انتهت المناسبة";
+                        badgeClass = "bg-secondary text-white";
+                    }
+
+                    container.innerHTML += `
+                                <div class="list-group-item p-2 mb-2 rounded border d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-bold mb-0 text-dark">${ev.title} <span class="badge ${badgeClass} ms-2">${badgeText}</span></h6>
+                                        <span class="text-muted small"><i class="fa-regular fa-calendar me-1"></i>الموعد: ${ev.date}</span>
+                                    </div>
+                                    <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="db.collection('ent_events').doc('${ev.id}').delete()"><i class="fa-solid fa-trash"></i></button>
+                                </div>`;
+                });
+            }
+
+            // --- 3. برمجيات مفكرة الهوايات والأفكار ---
+            function addHobbyItem(e) {
+                e.preventDefault();
+                db.collection("ent_hobbies").add({
+                    title: document.getElementById('hobbyTitle').value.trim(),
+                    desc: document.getElementById('hobbyDesc').value.trim(),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => { document.getElementById('hobbyForm').reset(); });
+            }
+
+            function renderHobbiesList() {
+                const container = document.getElementById('hobbiesListContainer');
+                container.innerHTML = hobbiesList.length === 0 ? '<p class="text-muted small text-center py-3">المفكرة فارغة لا توجد أفكار مضافة</p>' : '';
+                hobbiesList.forEach(h => {
+                    container.innerHTML += `
+                                <div class="list-group-item p-2 mb-2 rounded border">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="fw-bold mb-1 text-info">${h.title}</h6>
+                                        <button class="btn btn-outline-danger btn-sm py-0 px-1" onclick="db.collection('ent_hobbies').doc('${h.id}').delete()"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                    <p class="mb-0 small text-muted">${h.desc}</p>
+                                </div>`;
+                });
+            }
+    </script>
+</body>
+</html>

@@ -1,0 +1,553 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>السجلات الشخصية - Smart Assistant</title>
+
+    <!-- Bootstrap 5 RTL -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Cairo) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+    <style>
+            body {
+                font-family: 'Cairo', sans-serif;
+                background-color: #f8fafc;
+                min-height: 100vh;
+                display: flex;
+                margin: 0;
+            }
+
+            .sidebar {
+                width: 260px;
+                background: #1e293b;
+                color: #fff;
+                display: flex;
+                flex-direction: column;
+                padding: 1.5rem 1rem;
+            }
+
+            .sidebar-brand {
+                font-size: 1.4rem;
+                font-weight: 700;
+                color: #38bdf8;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 2.5rem;
+            }
+
+            .nav-link-custom {
+                color: #94a3b8;
+                padding: 0.8rem 1rem;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                text-decoration: none;
+                font-weight: 600;
+                margin-bottom: 0.5rem;
+                transition: all 0.3s ease;
+            }
+
+                .nav-link-custom:hover, .nav-link-custom.active {
+                    background-color: #2563eb;
+                    color: #ffffff;
+                }
+
+            .main-content {
+                flex: 1;
+                padding: 2rem;
+                overflow-y: auto;
+            }
+
+            .card-custom {
+                background: #ffffff;
+                border-radius: 16px;
+                border: 1px solid #e2e8f0;
+                padding: 1.5rem;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+                margin-bottom: 1.5rem;
+            }
+
+            /* كروت المجلدات الرئيسية */
+            .rec-folder-card {
+                background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+                color: #fff;
+                border-radius: 18px;
+                padding: 1.8rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                border: 1px solid #312e81;
+                height: 100%;
+            }
+
+                .rec-folder-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+                    border-color: #6366f1;
+                }
+
+            .folder-icon-indigo {
+                font-size: 3rem;
+                color: #818cf8;
+            }
+
+            .folder-icon-rose {
+                font-size: 3rem;
+                color: #fb7185;
+            }
+
+            .folder-icon-emerald {
+                font-size: 3rem;
+                color: #34d399;
+            }
+
+            .doc-thumb-card {
+                position: relative;
+                border-radius: 12px;
+                overflow: hidden;
+                border: 2px solid #e2e8f0;
+                background: #000;
+                height: 130px;
+                cursor: pointer;
+            }
+
+                .doc-thumb-card img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+
+            input[type="date"] {
+                direction: ltr;
+                text-align: right;
+            }
+    </style>
+</head>
+<body>
+
+    <!-- القائمة الجانبية -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fa-solid fa-brain"></i>
+            <span>Smart Assistant</span>
+        </div>
+
+        <nav class="w-100">
+            <a href="/Home/Dashboard" class="nav-link-custom">
+                <i class="fa-solid fa-house"></i> الرئيسية
+            </a>
+            <a href="/Finance/Index" class="nav-link-custom">
+                <i class="fa-solid fa-wallet"></i> الشؤون المالية
+            </a>
+            <a href="/Home/Memory" class="nav-link-custom">
+                <i class="fa-solid fa-book-bookmark"></i> الذاكرة الشخصية
+            </a>
+            <a href="/Home/Health" class="nav-link-custom">
+                <i class="fa-solid fa-heart-pulse"></i> الصحة
+            </a>
+            <a href="/Home/Entertainment" class="nav-link-custom">
+                <i class="fa-solid fa-gamepad"></i> الترفيه
+            </a>
+            <a href="/Home/PersonalRecords" class="nav-link-custom active">
+                <i class="fa-solid fa-folder-open"></i> السجلات الشخصية
+            </a>
+        </nav>
+
+        <div class="mt-auto w-100 pt-4 border-top border-secondary">
+            <a href="/Account/Login" class="nav-link-custom text-danger">
+                <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
+            </a>
+        </div>
+    </aside>
+
+    <!-- المحتوى الرئيسي -->
+    <main class="main-content">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1">السجلات والأرشيف الشخصي (متصل بالسحابة ☁️)</h3>
+                <p class="text-muted mb-0">إدارة سجل السيارة والصيانة، الوثائق الرسمية، والاشتراكات السنوية والشهرية</p>
+            </div>
+            <a href="/Home/Dashboard" class="btn btn-outline-secondary btn-sm">
+                <i class="fa-solid fa-arrow-right me-1"></i> العودة للداشبورد
+            </a>
+        </div>
+
+        <!-- المجلدات الثلاثة الرئيسية -->
+        <div class="row g-4">
+
+            <!-- 1. مجلد سجل السيارة والصيانة -->
+            <div class="col-md-4">
+                <div class="rec-folder-card d-flex flex-column justify-content-between" onclick="openCarModal()">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <i class="fa-solid fa-folder-closed folder-icon-indigo"></i>
+                            <span class="badge bg-indigo bg-opacity-20 text-light border border-indigo px-3 py-2 rounded-pill" id="carCountBadge">0 عمليات صيانة</span>
+                        </div>
+                        <h4 class="fw-bold text-white mb-2">سجل السيارة والصيانة</h4>
+                        <p class="text-muted small">تدوين مواعيد الصيانة الدورية، تغيير الزيوت والقطع، والتكاليف المالية للمركبة.</p>
+                    </div>
+                    <div class="pt-3 border-top border-secondary text-end">
+                        <span class="btn btn-outline-light btn-sm rounded-pill px-3">
+                            <i class="fa-solid fa-folder-open me-1"></i> فتح السجل
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. مجلد الوثائق والمستندات الرسمية -->
+            <div class="col-md-4">
+                <div class="rec-folder-card d-flex flex-column justify-content-between" onclick="openDocsModal()">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <i class="fa-solid fa-folder-closed folder-icon-rose"></i>
+                            <span class="badge bg-rose bg-opacity-20 text-light border border-rose px-3 py-2 rounded-pill" id="docsCountBadge">0 وثائق</span>
+                        </div>
+                        <h4 class="fw-bold text-white mb-2">الوثائق والمستندات الرسمية</h4>
+                        <p class="text-muted small">حفظ أرقام وصور الهويات، الجوازات، العقود، والوثائق الهامة في مكان أمن.</p>
+                    </div>
+                    <div class="pt-3 border-top border-secondary text-end">
+                        <span class="btn btn-outline-light btn-sm rounded-pill px-3">
+                            <i class="fa-solid fa-folder-open me-1"></i> فتح السجل
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. مجلد الاشتراكات والخدمات -->
+            <div class="col-md-4">
+                <div class="rec-folder-card d-flex flex-column justify-content-between" onclick="openSubsModal()">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <i class="fa-solid fa-folder-closed folder-icon-emerald"></i>
+                            <span class="badge bg-emerald bg-opacity-20 text-light border border-emerald px-3 py-2 rounded-pill" id="subsCountBadge">0 اشتراكات</span>
+                        </div>
+                        <h4 class="fw-bold text-white mb-2">سجل الاشتراكات والخدمات</h4>
+                        <p class="text-muted small">متابعة الاشتراكات الدورية (الإنترنت، السحابة، الخدمات) وتواريخ التجديد.</p>
+                    </div>
+                    <div class="pt-3 border-top border-secondary text-end">
+                        <span class="btn btn-outline-light btn-sm rounded-pill px-3">
+                            <i class="fa-solid fa-folder-open me-1"></i> فتح السجل
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- ========================================== -->
+    <!-- 1. Modal سجل السيارة والصيانة -->
+    <!-- ========================================== -->
+    <div class="modal fade" id="carModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-car text-indigo me-2"></i> سجل السيارة والصيانة الدورية</h5>
+                    <button type="button" class="btn-close btn-close-white ms-0 me-auto" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card p-3 border-0 bg-light rounded-3">
+                                <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-wrench me-1"></i> توثيق صيانة / إجراء</h6>
+                                <form id="carForm" onsubmit="addCarRecord(event)">
+                                    <input type="text" id="carService" class="form-control form-control-sm mb-2" placeholder="نوع الصيانة (تبديل زيت، إطارات...)" required autocomplete="off">
+                                    <input type="number" step="0.01" id="carCost" class="form-control form-control-sm mb-2" placeholder="التكلفة (د.ع)" required>
+                                    <input type="date" id="carDate" class="form-control form-control-sm mb-2" required>
+                                    <textarea id="carNotes" class="form-control form-control-sm mb-3" rows="2" placeholder="ملاحظات الصيانة (نوع الزيت، تفاصيل قطع الغيار...)" autocomplete="off"></textarea>
+                                    <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">حفظ الصيانة</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <h6 class="fw-bold mb-3">سجل عمليات الصيانة المحفوظة:</h6>
+                            <div class="list-group" id="carListContainer" style="max-height: 350px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إغلاق</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. Modal الوثائق والمستندات الرسمية -->
+    <!-- ========================================== -->
+    <div class="modal fade" id="docsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-file-contract text-rose me-2"></i> الوثائق والمستندات الرسمية</h5>
+                    <button type="button" class="btn-close btn-close-white ms-0 me-auto" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card p-3 border-0 bg-light rounded-3">
+                                <h6 class="fw-bold text-danger mb-3"><i class="fa-solid fa-upload me-1"></i> حفظ وثيقة جديدة</h6>
+                                <form id="docForm" onsubmit="addDocRecord(event)">
+                                    <input type="text" id="docTitle" class="form-control form-control-sm mb-2" placeholder="اسم الوثيقة (جواز، هوية، عقد...)" required autocomplete="off">
+                                    <input type="text" id="docNumber" class="form-control form-control-sm mb-2" placeholder="رقم الوثيقة (اختياري)" autocomplete="off">
+                                    <div class="input-group input-group-sm mb-2">
+                                        <input type="file" id="docFile" class="form-control" accept="image/*" onchange="previewDocImage(event)">
+                                        <button type="submit" id="saveDocBtn" class="btn btn-danger fw-bold">حفظ</button>
+                                    </div>
+                                    <div class="text-center d-none" id="docPreviewBox">
+                                        <img id="docPreview" src="" class="rounded border" style="max-height: 90px; object-fit: contain;">
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <h6 class="fw-bold mb-3">أرشيف الوثائق والمستندات:</h6>
+                            <div class="row g-2" id="docsGridContainer" style="max-height: 350px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إغلاق</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 3. Modal سجل الاشتراكات والخدمات -->
+    <!-- ========================================== -->
+    <div class="modal fade" id="subsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-credit-card text-emerald me-2"></i> سجل الاشتراكات والخدمات</h5>
+                    <button type="button" class="btn-close btn-close-white ms-0 me-auto" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card p-3 border-0 bg-light rounded-3">
+                                <h6 class="fw-bold text-success mb-3"><i class="fa-solid fa-plus-circle me-1"></i> إضافة اشتراك جديد</h6>
+                                <form id="subForm" onsubmit="addSubRecord(event)">
+                                    <input type="text" id="subName" class="form-control form-control-sm mb-2" placeholder="اسم الخدمة (إنترنت، سيرفر، اشتراك...)" required autocomplete="off">
+                                    <input type="number" step="0.01" id="subCost" class="form-control form-control-sm mb-2" placeholder="قيمة الاشتراك (د.ع)" required>
+                                    <label class="form-label extra-small fw-bold mb-1">تاريخ التجديد القادم:</label>
+                                    <input type="date" id="subRenewDate" class="form-control form-control-sm mb-3" required>
+                                    <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">حفظ الاشتراك</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <h6 class="fw-bold mb-3">سجل الاشتراكات والتنبيهات:</h6>
+                            <div class="list-group" id="subsListContainer" style="max-height: 350px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إغلاق</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+            const firebaseConfig = {
+                apiKey: "AIzaSyCth_4KFFBASVtQvZ8qcW-fWtaSTK7Y-Jg",
+                authDomain: "smartassistant-web.firebaseapp.com",
+                projectId: "smartassistant-web",
+                storageBucket: "smartassistant-web.firebasestorage.app",
+                messagingSenderId: "882536781365",
+                appId: "1:882536781365:web:f06cab966d9479b21637c"
+            };
+
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            const db = firebase.firestore();
+
+            let carList = [], docsList = [], subsList = [];
+            let carModal, docsModal, subsModal;
+            let selectedDocBase64 = "";
+
+            window.addEventListener('DOMContentLoaded', () => {
+                carModal = new bootstrap.Modal(document.getElementById('carModal'));
+                docsModal = new bootstrap.Modal(document.getElementById('docsModal'));
+                subsModal = new bootstrap.Modal(document.getElementById('subsModal'));
+
+                const todayStr = new Date().toISOString().split('T')[0];
+                document.getElementById('carDate').value = todayStr;
+                document.getElementById('subRenewDate').value = todayStr;
+
+                loadPersonalRecordsData();
+            });
+
+            function loadPersonalRecordsData() {
+                // 1. السيارة والصيانة
+                db.collection("rec_car").orderBy("date", "desc").onSnapshot(s => {
+                    carList = [];
+                    s.forEach(d => carList.push({ id: d.id, ...d.data() }));
+                    document.getElementById('carCountBadge').innerText = `${carList.length} عمليات صيانة`;
+                    renderCarList();
+                });
+
+                // 2. الوثائق
+                db.collection("rec_docs").orderBy("createdAt", "desc").onSnapshot(s => {
+                    docsList = [];
+                    s.forEach(d => docsList.push({ id: d.id, ...d.data() }));
+                    document.getElementById('docsCountBadge').innerText = `${docsList.length} وثائق`;
+                    renderDocsGrid();
+                });
+
+                // 3. الاشتراكات
+                db.collection("rec_subs").orderBy("renewDate", "asc").onSnapshot(s => {
+                    subsList = [];
+                    s.forEach(d => subsList.push({ id: d.id, ...d.data() }));
+                    document.getElementById('subsCountBadge').innerText = `${subsList.length} اشتراكات`;
+                    renderSubsList();
+                });
+            }
+
+            function openCarModal() { carModal.show(); }
+            function openDocsModal() { docsModal.show(); }
+            function openSubsModal() { subsModal.show(); }
+
+            // --- 1. السيارة والصيانة (محدث بحقل الملاحظات) ---
+            function addCarRecord(e) {
+                e.preventDefault();
+                db.collection("rec_car").add({
+                    service: document.getElementById('carService').value.trim(),
+                    cost: parseFloat(document.getElementById('carCost').value),
+                    date: document.getElementById('carDate').value,
+                    notes: document.getElementById('carNotes').value.trim(),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => { document.getElementById('carForm').reset(); });
+            }
+
+            function renderCarList() {
+                const container = document.getElementById('carListContainer');
+                container.innerHTML = carList.length === 0 ? '<p class="text-muted small text-center py-3">لا توجد عمليات صيانة مسجلة</p>' : '';
+                carList.forEach(c => {
+                    container.innerHTML += `
+                                <div class="list-group-item p-2 mb-2 rounded border d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-bold mb-0 text-dark">${c.service} <span class="badge bg-primary ms-2">${c.cost} د.ع</span></h6>
+                                        <span class="text-muted small d-block"><i class="fa-regular fa-calendar me-1"></i>التاريخ: ${c.date}</span>
+                                        ${c.notes ? `<span class="text-secondary small d-block"><b>ملاحظات:</b> ${c.notes}</span>` : ''}
+                                    </div>
+                                    <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="db.collection('rec_car').doc('${c.id}').delete()"><i class="fa-solid fa-trash"></i></button>
+                                </div>`;
+                });
+            }
+
+            // --- 2. الوثائق والمستندات ---
+            function previewDocImage(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const r = new FileReader();
+                    r.onload = function (ev) {
+                        selectedDocBase64 = ev.target.result;
+                        document.getElementById('docPreview').src = selectedDocBase64;
+                        document.getElementById('docPreviewBox').classList.remove('d-none');
+                    };
+                    r.readAsDataURL(file);
+                }
+            }
+
+            function addDocRecord(e) {
+                e.preventDefault();
+                db.collection("rec_docs").add({
+                    title: document.getElementById('docTitle').value.trim(),
+                    number: document.getElementById('docNumber').value.trim(),
+                    url: selectedDocBase64 || "",
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    document.getElementById('docForm').reset();
+                    document.getElementById('docPreviewBox').classList.add('d-none');
+                    selectedDocBase64 = "";
+                });
+            }
+
+            function renderDocsGrid() {
+                const container = document.getElementById('docsGridContainer');
+                container.innerHTML = docsList.length === 0 ? '<div class="col-12 text-muted small text-center py-3">لا توجد وثائق محفوظة</div>' : '';
+                docsList.forEach(d => {
+                    let hasImg = d.url && d.url.length > 0;
+                    container.innerHTML += `
+                                <div class="col-6 col-md-4">
+                                    <div class="card p-2 border shadow-sm h-100 position-relative">
+                                        <button class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 p-1 py-0" onclick="db.collection('rec_docs').doc('${d.id}').delete()"><i class="fa-solid fa-trash"></i></button>
+                                        ${hasImg ? `<div class="doc-thumb-card mb-2"><img src="${d.url}" alt="${d.title}"></div>` : '<div class="bg-light rounded p-3 text-center mb-2"><i class="fa-solid fa-file-lines fs-2 text-secondary"></i></div>'}
+                                        <h6 class="fw-bold mb-0 text-truncate">${d.title}</h6>
+                                        <span class="text-muted extra-small" style="font-size:0.75rem;">${d.number ? 'رقم: ' + d.number : 'بدون رقم'}</span>
+                                    </div>
+                                </div>`;
+                });
+            }
+
+            // --- 3. الاشتراكات والخدمات ---
+            function addSubRecord(e) {
+                e.preventDefault();
+                db.collection("rec_subs").add({
+                    name: document.getElementById('subName').value.trim(),
+                    cost: parseFloat(document.getElementById('subCost').value),
+                    renewDate: document.getElementById('subRenewDate').value,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => { document.getElementById('subForm').reset(); });
+            }
+
+            function renderSubsList() {
+                const container = document.getElementById('subsListContainer');
+                container.innerHTML = subsList.length === 0 ? '<p class="text-muted small text-center py-3">لا توجد اشتراكات مسجلة</p>' : '';
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                subsList.forEach(s => {
+                    const renew = new Date(s.renewDate);
+                    const diffTime = renew - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    let badgeText = "";
+                    let badgeClass = "bg-success";
+                    if (diffDays <= 3 && diffDays >= 0) {
+                        badgeText = `تجديد قادم خلال ${diffDays} يوم!`;
+                        badgeClass = "bg-warning text-dark";
+                    } else if (diffDays < 0) {
+                        badgeText = "منتهي الاشتراك";
+                        badgeClass = "bg-danger";
+                    } else {
+                        badgeText = `متبقي ${diffDays} يوم`;
+                    }
+
+                    container.innerHTML += `
+                                <div class="list-group-item p-2 mb-2 rounded border d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-bold mb-0 text-dark">${s.name} <span class="badge bg-success ms-2">${s.cost} د.ع</span> <span class="badge ${badgeClass} ms-1">${badgeText}</span></h6>
+                                        <span class="text-muted small"><i class="fa-regular fa-calendar me-1"></i>تاريخ التجديد: ${s.renewDate}</span>
+                                    </div>
+                                    <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="db.collection('rec_subs').doc('${s.id}').delete()"><i class="fa-solid fa-trash"></i></button>
+                                </div>`;
+                });
+            }
+    </script>
+</body>
+</html>
